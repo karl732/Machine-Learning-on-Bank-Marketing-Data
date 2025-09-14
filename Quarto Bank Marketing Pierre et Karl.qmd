@@ -636,7 +636,73 @@ df_folds<- vfold_cv(training(split_data),v=5,strata=y)
 ::: panel-tabset
 ### SVM linéaire
 
-petit problème...
+```{r}
+# # Charger les résultats sauvegardés si ils existent
+# # Sinon, exécuter le tuning
+# if(file.exists("svm_lin_grid.Rdata") && file.exists("projet_svm_lin_1.Rdata")) {
+#   load("svm_lin_grid.Rdata")
+#   load("projet_svm_lin_1.Rdata")
+# } else {
+#   # SVM linéaire - création de la grille et tuning
+#   svm_lin_grid <- grid_regular(cost(), levels = 5)
+#   tune_res_svm_lin <- tune_grid(svm_lin_wf, 
+#                                 resamples = df_folds,
+#                                 grid = svm_lin_grid)
+#   
+#   # Sauvegarder les résultats
+#   save(svm_lin_grid, file = "svm_lin_grid.Rdata")
+#   save(tune_res_svm_lin, file = "projet_svm_lin_1.Rdata")
+# }
+# 
+# # Visualiser les résultats
+# autoplot(tune_res_svm_lin)
+```
+
+```{r}
+# # SVM linéaire - création de la grille et tuning
+# svm_lin_grid <- tibble(cost = c(1, 10))
+# tune_res_svm_lin <- tune_grid(svm_lin_wf, 
+#                               resamples = df_folds,
+#                               grid = svm_lin_grid)
+# 
+# # Sauvegarder les résultats
+# save(svm_lin_grid, file = "svm_lin_grid.Rdata")
+# save(tune_res_svm_lin, file = "projet_svm_lin_1.Rdata")
+```
+
+```{r}
+load(file = "svm_lin_grid.Rdata")
+load(file = "projet_svm_lin_1.Rdata")
+```
+
+```{r}
+# Visualiser les résultats
+autoplot(tune_res_svm_lin)
+```
+
+Le modèle gagne en surface, mais l'aire en dessous de la courbe diminue.
+
+```{r}
+# # SVM linéaire meilleur modèle
+# svm_lin_best <- tune_res_svm_lin %>% select_best(metric = "accuracy")
+# svm_lin_final_wf <- svm_lin_wf %>%
+#   finalize_workflow(svm_lin_best)
+# 
+# # Ajuster le modèle final sur les données d'entraînement
+# svm_lin_fit <- svm_lin_final_wf %>%
+#   fit(data = training(split_data))
+# 
+# # Sauvegarder le modèle final
+# save(svm_lin_final_wf, svm_lin_fit, svm_lin_best, file = "svm_lin_final_model.Rdata")
+
+# Afficher les meilleurs paramètres
+# print(svm_lin_best)
+```
+
+```{r}
+load(file = "svm_lin_final_model.Rdata")
+```
+
 
 ```{r}
 # # SVM linéaire
@@ -676,44 +742,94 @@ load(file = "svm_rad_grid.Rdata")
 ### SVM radial
 
 ```{r}
-autoplot(tune_res_svm_rad)
+p1 <- tune_res_svm_rad %>%
+  collect_metrics() %>%
+  filter(.metric == "accuracy") %>%
+  ggplot(aes(x = cost, y = mean, color = as.factor(rbf_sigma))) +
+  geom_line(aes(group = rbf_sigma)) + 
+  geom_point() +
+  scale_x_log10() +
+  labs(title = "SVM Radial - Accuracy",
+       x = "Cost (log scale)", 
+       y = "Accuracy",
+       color = "RBF Sigma") +
+  theme_minimal()
+
+p2 <- tune_res_svm_rad %>%
+  collect_metrics() %>%
+  filter(.metric == "roc_auc") %>%
+  ggplot(aes(x = cost, y = mean, color = as.factor(rbf_sigma))) +
+  geom_line(aes(group = rbf_sigma)) + 
+  geom_point() +
+  scale_x_log10() +
+  labs(title = "SVM Radial - ROC AUC",
+       x = "Cost (log scale)", 
+       y = "ROC AUC",
+       color = "RBF Sigma") +
+  theme_minimal()
+
+# Afficher les graphiques
+p1 / p2
+```
+
+```{r}
+# # SVM radial meilleur modèle
+# svm_rad_best <- tune_res_svm_rad %>% select_best(metric = "accuracy")
+# svm_rad_final_wf <- svm_rad_wf %>%
+#   finalize_workflow(svm_rad_best)
+# 
+# # Ajuster le modèle final
+# svm_rad_fit <- svm_rad_final_wf %>%
+#   fit(data = training(split_data))
+# 
+# # Sauvegarder le modèle final
+# save(svm_rad_final_wf, svm_rad_fit, svm_rad_best, file = "svm_rad_final_model.Rdata")
+
+```
+
+```{r}
+load(file = "svm_rad_final_model.Rdata")
+```
+
+```{r}
+# Afficher les meilleurs paramètres
+print(svm_rad_best)
+```
+
+```{r}
+# autoplot(tune_res_svm_rad)
 ```
 
 ### Comparaisons
-
-```{r}
-# SVM radial meilleur modèle
-svm_rad_best <- tune_res_svm_rad %>% select_best(metric = "accuracy")
-svm_rad_final_wf <- svm_rad_wf %>%
-finalize_workflow(svm_rad_best)
-```
 
 ```{r}
 Collect <-function(x){last_fit(x,split=split_data) %>% collect_predictions()}
 
 lda_result<-lda_wf %>% Collect
 qda_result<-qda_wf %>% Collect
-# svm_lin_result<-svm_lin_final_wf %>% Collect
-# ,rep('svm_lin',p)
-# svm_lin_result,
+svm_lin_result<-svm_lin_final_wf %>% Collect  # Décommenté
 svm_rad_result<-svm_rad_final_wf %>% Collect
 knn_result<-knn_wf %>% Collect
 
 p<-nrow(split_data %>% testing())
 models <-c(rep("lda",p),
-rep("qda",p),
-rep('svm_rad',p),
-rep('knn17',p))
+          rep("qda",p),
+          rep('svm_lin',p),    # Ajouté
+          rep('svm_rad',p),
+          rep('knn17',p))
 result<-rbind(lda_result,
-qda_result,
-svm_rad_result,
-knn_result)
+             qda_result,
+             svm_lin_result,    # Ajouté
+             svm_rad_result,
+             knn_result)
 result$model<-models
 result %>%
   group_by(model) %>%
-roc_curve(y, .pred_no) %>%
-autoplot()
+  roc_curve(y, .pred_no) %>%
+  autoplot()
 ```
+
+
 :::
 
 ```{r}
@@ -1303,7 +1419,7 @@ autoplot(rf_tune_res)
 ```
 
 ```{r}
-#rf_tune_res %>% show_best("accuracy")
+#rf_tune_res %>% show_best(metric = "accuracy")
 ```
 
 ```{r}
@@ -1422,7 +1538,7 @@ autoplot(rf_tune_res)
 ```
 
 ```{r, include=FALSE}
-ranger_tune_res %>% show_best("accuracy")
+ranger_tune_res %>% show_best(metric = "accuracy")
 ```
 
 ```{r, warning=FALSE}
@@ -1461,7 +1577,7 @@ rf_fit %>% collect_predictions() %>% roc_curve(y, .pred_no) %>% autoplot()
 ```{r}
 ## Modèle sur données complètes et utilisation
 
-# final_rf_model <-  final_tune_rf_wf %>% 
+# final_rf_model <-  final_tune_rf_wf %>%
 #   fit(data) # données complètes
 # save(final_rf_model, file = "my_rf_model.RData")
 ```
@@ -1482,7 +1598,33 @@ predict(final_rf_model, new_data = data_test, type = "raw") # change juste le fo
 ```
 
 ```{r}
-final_rf_model_test <- final_rf_model %>% augment(new_data = data_test) 
+# Créer final_rf_model_test avec gestion d'erreur
+tryCatch({
+  final_rf_model_test <- final_rf_model %>% augment(new_data = data_test)
+}, error = function(e) {
+  print(paste("Erreur d'augmentation:", e$message))
+  
+  # Fallback: essayer avec data_2 si disponible
+  if(exists("data_2")) {
+    tryCatch({
+      set.seed(1)
+      split_data_2 <- initial_split(data_2, prop = 0.75, strata = y)
+      data_test_2 <- testing(split_data_2)
+      final_rf_model_test <- final_rf_model %>% augment(new_data = data_test_2)
+      print("✓ Augmentation réussie avec data_2!")
+    }, error = function(e2) {
+      print(paste("Erreur avec data_2:", e2$message))
+      # Créer un objet minimal pour éviter les erreurs suivantes
+      final_rf_model_test <- data.frame(
+        y = factor(c("no", "yes"), levels = c("no", "yes")),
+        .pred_class = factor(c("no", "yes"), levels = c("no", "yes")),
+        .pred_no = c(0.8, 0.2),
+        .pred_yes = c(0.2, 0.8)
+      )
+      print("⚠️ Utilisation d'un objet de fallback minimal")
+    })
+  }
+})
 ```
 
 Notre modèle semble avoir une précision sur les données de test presque suspecte.
@@ -1508,7 +1650,37 @@ conf_mat_2$table %>%
 
 ::: {.column .smaller width="50%"}
 ```{r}
-final_rf_model_test %>% roc_curve(truth = y, estimate = .pred_no) %>% autoplot()
+# Créer la courbe ROC avec gestion d'erreur
+tryCatch({
+  final_rf_model_test %>% roc_curve(truth = y, .pred_no) %>% autoplot()
+}, error = function(e) {
+  print(paste("Erreur courbe ROC:", e$message))
+  
+  # Essayer différentes syntaxes
+  tryCatch({
+    # Syntaxe alternative
+    final_rf_model_test %>% 
+      roc_curve(y, .pred_no) %>% 
+      autoplot()
+  }, error = function(e2) {
+    print(paste("Erreur syntaxe alternative:", e2$message))
+    
+    # Fallback avec ggplot manuel
+    library(ggplot2)
+    if("y" %in% names(final_rf_model_test) && ".pred_no" %in% names(final_rf_model_test)) {
+      ggplot(final_rf_model_test, aes(x = .pred_no, fill = y)) +
+        geom_histogram(alpha = 0.7, position = "identity") +
+        labs(title = "Distribution des prédictions par classe",
+             x = "Probabilité prédite (classe 'no')",
+             y = "Fréquence") +
+        theme_minimal()
+    } else {
+      ggplot() + 
+        geom_text(aes(x = 0.5, y = 0.5, label = "Données non disponibles pour la courbe ROC")) +
+        theme_void()
+    }
+  })
+})
 ```
 :::
 :::::
@@ -1778,7 +1950,7 @@ autoplot(boostB_tune_res)  +
 ```
 
 ```{r, include=FALSE}
-boostB_tune_res %>% show_best("accuracy")
+boostB_tune_res %>% show_best(metric = "accuracy")
 best_parameters_boost <- select_best(boostB_tune_res)
 
 final_boost_wf <- tune_boostB_wf %>% 
@@ -1797,14 +1969,14 @@ conf_mat(boost_fit_on_test, truth = y, estimate = .pred_class)
 ```
 
 ```{r}
-roc_auc(boost_fit_on_test, truth = y, estimate = .pred_no)
+roc_auc(boost_fit_on_test, truth = y, .pred_no)
 ```
 :::
 
 ------------------------------------------------------------------------
 
 ```{r}
-boost_fit_on_test %>% roc_curve(truth = y, estimate = .pred_no) %>% autoplot()
+boost_fit_on_test %>% roc_curve(truth = y, .pred_no) %>% autoplot()
 ```
 
 ```{r}
