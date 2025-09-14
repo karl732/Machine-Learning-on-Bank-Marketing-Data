@@ -1,0 +1,1816 @@
+---
+title: "Machine learning Project"
+subtitle: "Bank Marketing"
+author: "Pierre Jean & Karl Sondeji"
+subject: "M1 Economie de l'entreprise"
+institute : "Université De Tours"
+title-slide-attributes:
+  data-background-color: "#43464B"
+  data-background-image: ampoule.jpg
+  data-background-size: 100% 135%
+format:
+  revealjs:
+    navigation-mode: vertical
+    scrollable: false
+    slide-number: true
+    chalkboard: 
+      buttons: true
+    preview-links: auto
+    logo: logomecen.png
+    css: styles.css
+    footer: "Data Mining"
+editor: visual
+---
+
+![](logouniv.png){.absolute top="180" left="35" width="300" height="200"}
+
+![](logomecen.png){.absolute top="160" right="65" width="250"}
+
+<br>
+
+::: {.absolute bottom="80" right="250"}
+Pierre Jean et Karl Sondeji
+:::
+
+::: {.absolute bottom="40" right="160"}
+```         
+Supervisé par: Julie Scholler et Franck Piller
+```
+:::
+
+::: {.absolute bottom="0" right="50"}
+```         
+01 Mars 2023 (updated: `r Sys.Date()`)
+```
+:::
+
+<br>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, sanitize = TRUE, echo = FALSE, cache = TRUE)
+```
+
+```{r}
+library(FactoMineR)
+library(factoextra)
+library(graphics)
+library(ggplot2)
+library(tinytex)
+library(dplyr)
+library(DT)
+library(ggpubr)
+library(questionr)
+library(tikzDevice)
+library(ggthemes)
+library(patchwork)
+library(visdat)
+theme_set(theme_minimal())
+```
+
+```{r}
+library(knitr)
+library(kableExtra)
+library(tidyverse)
+library(tidymodels)
+library(pROC)
+library(plotROC)
+library(ROCR)
+library(precrec)
+library(kernlab)
+library(randomForest)
+library(discrim)
+library(ISLR)
+library(MASS)
+library(e1071)
+library(kknn)
+```
+
+```{r}
+library(dplyr)
+library(caret)
+library(rsample)
+library(rpart)
+library(rpart.plot)
+# Nouvelles librairies
+library(mlbench)
+library(gmodels)
+library(class)
+library(parallel)
+library(doParallel)
+library(MLmetrics)
+library(tree)
+library(ada)
+library(yardstick)
+library(DMwR2)
+```
+
+# Présentation de la base de données {transition="zooom"}
+
+::: {.fragment .fade-right}
+-   Présentation de la base de données sur les cibles marketing
+:::
+
+::: {.fragment .fade-in}
+-   Importation des données
+:::
+
+::: {.fragment .fade-up}
+-   Visualisation des données manquantes
+:::
+
+::: {.fragment .fade-left}
+-   Restucturation de notre base de données
+:::
+
+## Présentation de la base de données {transition="zooom"}
+
+Les données sont liées à des campagnes de marketing direct (par appels téléphoniques) d'une institution bancaire portugaise. Ces campagnes nécessitant d'énormes investissements, il est vital pour les banques d'identifier au préalable les clients les plus susceptibles de souscrire, afin de les cibler en priorité.
+
+-   echantillon d'entraînement **train** : 17 colonnes et 45211 observations
+-   echantillon test **test** : 17 colonnes et 4521 observations
+
+------------------------------------------------------------------------
+
+::: {#.smaller .smaller out.width="30%"}
+Concernant les variables:
+
+-   age (numérique)
+
+-   job : type d'emploi (catégorielle: `admin.`,`unknown`,`unemployed`,`management`,`housemaid`,`entrepreneur`,`student`, `blue-collar`,`self-employed`,`retired`,`technician`,`services`)
+
+-   marital : marital status (catégorielle: `married`,`divorced`,`single`; à noter: `divorced` signifie divorcé ou veuf)
+
+-   education (catégorielle: `unknown`,`secondary`,`primary`,`tertiary`)
+
+-   default: la personne est elle en défaut de crédit? (binaire: `yes`,`no`)
+
+-   balance: moyenne de l'équilibre annuel, en euros (numérique)
+
+-   housing: la personne a-t-elle un crédit immobilier? (binaire: `yes`,`no`)
+
+-   loan: la personne a-t-elle un emprunt? (binaire: `yes`,`no`)
+
+-   contact: manière dont la personne a été contactée (catégorielle: `unknown`,`telephone`,`cellular`)
+
+-   day: dernier jour contacté dans le mois (numérique)
+
+-   month: dernier mois contacté au cours de l'année (catégorielle: `jan`, `feb`, `mar`, ..., `nov`, `dec`)
+:::
+
+------------------------------------------------------------------------
+
+::: {.smaller out.width="`30%`"}
+-   duration: durée du dernier appel, en secondes (numérique)
+
+-   campaign: nombre d'appels réalisés au cours de cette campagne, pour ce client. (numérique, dernier appel inclu)
+
+-   pdays: nombre de jours qui se sont écoulés depuis que le client a été contacté pour la dernière fois lors d'une campagne précédente (numérique, -1 signifie que le client n'a pas été préalablement contacté)
+
+-   previous: nombre d'appels réalisés avant cette campagne pour ce client (numérique)
+
+-   poutcome: résultat de la campagne marketing précédente (catégorielle: `unknown`,`other`,`failure`,`success`)
+
+variable endogène (cible désirée): - y : le client a souscrit à un dépôt à terme? (binaire: `yes`,`no`)
+:::
+
+## Importation des données {.smaller transition="concave"}
+
+```{r}
+data <- read.csv2('train.csv', header = TRUE, sep = ";")
+head(str(data))
+```
+
+Nous décidons de procéder brièvement à une petite analyse concernant les données manquantes de notre base de données. Pour cela, nous avons représenté dans un tableau le nombre d'observations où figurent des données manquantes. Puis, à l'aide d'une représentation graphique, nous pourrons regarder quelles variables ont le plus de valeurs manquantes.
+
+## Analyse des donées manquantes {.smaller transition="concave"}
+
+```{r}
+library(visdat)
+vis_dat(data, palette = "default")
+```
+
+-   À première vue, on pourrait croire que notre base de données ne contient pas de valeurs manquantes, mais c'est simplement qu'elles ont été codées par "unknown". Il va donc falloir faire en sorte que le logiciel traite ces variables comme manquantes. On voit également sur ce graphique que toutes nos données non-numériques sont traitées comme des caractères, or pour faire des calculs ce n'est pas pratique.
+
+```{r, include=FALSE}
+# data$job <- fct_recode(data$job, NULL = "unknown")
+# data$education <- fct_recode(data$education, NULL = "unknown")
+# data$contact <- fct_recode(data$contact, NULL = "unknown")
+# data$poutcome <- fct_recode(data$poutcome, NULL = "unknown")
+# data$default <- recode_factor(data$default, "yes" = "1", "no" = "0")
+# data$housing <- recode_factor(data$housing, "yes" = "1", "no" = "0")
+# data$loan <- recode_factor(data$loan, "yes" = "1", "no" = "0")
+#data$y <- recode_factor(data$y, "yes" = "1", "no" = "0")
+```
+
+```{r}
+# Transformations des variables catégorielles jusqu'à lors considérées comme des caractères en facteurs
+data$job <- factor(data$job, levels = c("unknown","unemployed","services","management","blue-collar","self-employed", "technician","entrepreneur","admin.", "student","housemaid", "retired" ))
+data$marital <- factor(data$marital, levels = c('single', 'divorced', 'married'))
+data$education <- factor(data$education, levels = c('unknown', 'primary', 'secondary', 'tertiary'))
+data$month<- factor(data$month)
+```
+
+```{r}
+data$contact <- factor(data$contact, levels = c('unknown', 'cellular', 'telephone'))
+data$poutcome <- factor(data$poutcome, levels = c('unknown', 'other', 'failure', 'success'))
+```
+
+```{r}
+data <- data %>% 
+  mutate(default = factor(default),
+         housing = factor(housing),
+         loan = factor(loan),
+         y = factor(y))
+```
+
+## Restructuration de notre base de données {.smaller transition="zooom"}
+
+``` r
+# Transformations des variables catégorielles jusqu'à lors considérées comme des caractères en facteurs
+data$marital <- factor(data$marital, levels = c('single', 'divorced', 'married'))
+data$education <- factor(data$education, levels = c('unknown', 'primary', 'secondary', 'tertiary'))
+```
+
+``` r
+# on recode les variables de la base 
+data$job <- fct_recode(data$job, NULL = "unknown")
+data$education <- fct_recode(data$education, NULL = "unknown")
+data$default <- recode_factor(data$default, "yes" = "1", "no" = "0")
+data$housing <- recode_factor(data$housing, "yes" = "1", "no" = "0")
+```
+
+```{r, include=FALSE}
+par(mfrow= c(1,2))
+vis_dat(data, palette = "default")
+```
+
+Ainsi, après recodage, parmi les `r nrow(data)` observations contenues dans notre base de données, `r sum(is.na(data))` observations sont manquantes. Nous pouvons constater que ces données manquantes se concentrent autour des variables : `Poutcome` et `contact`. Ces informations nous indiquent que l'on n'a pas beaucoup d'informations sur les résultats des campagnes précédentes, et qu'on ne sait pas non plus comment 1/3 des clients ont été contactés durant cette campagne.
+
+<br>
+
+------------------------------------------------------------------------
+
+Quelques statistiques sur notre base de données
+
+```{r}
+summary(data)
+```
+
+On se rend compte que la modalité **yes** de notre variable `y` est sous représentée, `r 100*(round(sum(data$y == "yes")/length(data$y), 3))`% de nos données.
+
+## Visualisation de nos données {transition="fade"}
+
+```{r}
+couleur_1 <- "#662333"
+couleur_2 <- "#663333"
+```
+
+```{r}
+bar_1<-ggplot(data, aes(x=marital, fill = y))+ geom_bar()
+bar_2<-ggplot(data, aes(x=education, fill = y))+ geom_bar()
+bar_3<-ggplot(data, aes(x=poutcome, fill = y))+ geom_bar()
+bar_4<-ggplot(data, aes(x=default, fill = y))+ geom_bar()
+```
+
+```{r}
+(bar_1 + bar_2)/ (bar_3 + bar_4)
+```
+
+------------------------------------------------------------------------
+
+```{r}
+library(ggcorrplot)
+W=cor(data[,c(1,6,10,12:15)])
+ggcorrplot(W,hc.order = TRUE, type = "lower", lab = TRUE, 
+           colors = c("cornsilk1","cornsilk3","cornsilk4"),lab_size = 2,
+           pch = 7,tl.cex = 7,show.legend = T,
+           lab_col = "black") + ggtitle("Matrice des corrélations des différentes variables quantitatives")
+```
+
+# Problématique {transition="slide"}
+
+::: {.fragment style="color: brown;"}
+Au travers de cette étude, nous allons chercher à voir comment, au moyen de méthodes de machine learning, nous allons pouvoir identifier les caractéristiques propres des groupes constituants notre clientèle, de sorte à pouvoir prédire au mieux si un client souscrira à un dépôt à terme.
+:::
+
+## Le problème {transition="slide"}
+
+Dans la suite de ce TP, on utilisera systématiquement l'algorithme SMOTE pour corriger le sur'échantillonnage de la modalité **yes**.
+
+```{r}
+set.seed(1)
+split_data <- initial_split(data, prop = 0.75, strata = y)
+data_train <- training(split_data)
+data_test <- testing(split_data)
+```
+
+```{r}
+# as.data.frame(table(data_train$y))
+```
+
+```{r}
+# library(DMwR2)
+## Smote : Synthetic Minority Oversampling Technique To Handle Class Imbalancy In Binary Classification
+
+# data.smote <- SMOTE(y ~., data_train, perc.over = 15000, k = 5, perc.under = 5000)
+# 
+# as.data.frame(table(data.smote))
+```
+
+# KNN {transition="zooom"}
+
+<!-- ::: panel-tabset -->
+
+<!-- ### Significativité -->
+
+<!-- ### knn.3 -->
+
+<!-- ### opti -->
+
+<!-- ### knn.17 -->
+
+<!-- ::: -->
+
+## Significativité {transition="slide"}
+
+```{r}
+# copie la base de données
+
+knn_df <- data
+
+# on convertit tout les facteurs en variables numériques
+
+for (i in 1:16)
+{
+    knn_df[,i] <- as.numeric(knn_df[,i])
+}
+knn_df$pdays[knn_df$pdays==-1]=0 
+knn_df$previous[knn_df$previous==-1]=0 
+
+# on met toutes les variables à la même échelle
+
+knn_df1 <- sapply(knn_df[,1:16],scale)
+knn_df1 <- as.data.frame(knn_df1)
+knn.df <- cbind(knn_df1,knn_df$y)
+```
+
+```{r}
+# utilise la régression linéaire pour chaque x à y afin de sélectionner les fonctionnalités.
+## Niveau de significativité de chaque variable
+knn_df1 <- knn_df 
+knn_df1[,17] <- as.numeric(knn_df1[,17])
+for (i in 1:16)
+{
+  print(names(knn_df1)[i]) 
+  print(summary(lm(knn_df1[,17]~knn_df1[,i],knn_df1)))
+}
+
+```
+
+------------------------------------------------------------------------
+
+-   Matrice de confusion avec trois voisins
+
+```{r}
+# Matrice de confusion
+
+set.seed(1)
+train.size = floor(0.75*nrow(knn_df))
+train.index = sample(1:nrow(knn_df), train.size)
+train.set = knn_df[train.index,]
+test.set = knn_df[-train.index,]
+
+x.train = train.set[,-17] 
+x.test = test.set[,-17] 
+y.train = train.set[,17] 
+y.test = test.set[,17] 
+```
+
+```{r, include=FALSE}
+knn.3 <- knn(train = x.train, test = x.test, cl = y.train , k = 3)
+TB = table(predicted = knn.3, true = y.test)
+precision.knn = round((TB[1]+TB[4])/sum(TB)*100,2)
+precision.knn
+TB
+```
+
+```{r}
+lvs <- c("no", "yes")
+truth <- factor(rep(lvs, times = c(9940, 1363)),
+                levels = rev(lvs))
+pred <- factor(
+  c(
+    rep(lvs, times = c(9539, 456)),
+    rep(lvs, times = c(928, 380))),
+  levels = rev(lvs))
+```
+
+```{r}
+# matrice de confusion afin de calculer la précision de classification pour chaque étape.
+
+table <- data.frame(caret::confusionMatrix(pred, truth)$table)
+
+plotTable <- table %>%
+  mutate(goodbad = ifelse(table$Prediction == table$Reference, "good", "bad")) %>%
+  group_by(Reference) %>%
+  mutate(prop = Freq/sum(Freq))
+
+ggplot(data = plotTable, mapping = aes(x = Reference, y = Prediction, fill = goodbad, alpha = prop)) +
+  geom_tile() +
+  geom_text(aes(label = Freq), vjust = .5, fontface  = "bold", alpha = 1,size = 15) +
+  scale_fill_manual(values = c(good = "#228833", bad = "#cb2027")) +
+  theme_bw() +
+  xlim(rev(levels(table$Reference))) +
+theme(text = element_text(size=15)) +
+xlab("True Value")
+```
+
+Avec 3 voisins, on obtient une précision de `r precision.knn`.
+
+------------------------------------------------------------------------
+
+Recherche du nombre optimal de voisins
+
+```{r}
+#contrôle des tailles de figures
+fig <- function(width, heigth){
+     options(repr.plot.width = width, repr.plot.height = heigth)
+}
+```
+
+```{r, include=FALSE}
+# utiliser la métrique précision afin de déterminer le k qui donne le meilleur modèle.
+fig(8,5)
+k = seq(1,30,2)
+i=1 
+Accuracy=1                     
+
+for (i in k)
+{
+  knn.mod <-  knn(train=x.train, test=x.test, cl=y.train, k=i)
+  Accuracy[i] <- 100 * sum(y.test == knn.mod)/length(y.test)
+  k=i  
+  cat(k,'=',Accuracy[i],'\n')        
+}
+
+Accuracy <- Accuracy[!is.na(Accuracy)]
+k = seq(1,30,2)
+Accuracyplot <- data.frame(k,Accuracy)
+
+# valeur
+knn.mod_17 <-  knn(train=x.train, test=x.test, cl=y.train, k=17)
+  preci_knn_17 <- 100 * sum(y.test == knn.mod)/length(y.test)
+```
+
+```{r}
+# représentation graphique
+ggplot(Accuracyplot,aes(x=k,y=Accuracy))+
+  geom_line(col = "red")+
+  expand_limits(y=Accuracy[0])+
+  theme_dark() +
+  geom_text(aes(label=round(Accuracy,1)),vjust = -0.5,size = 5) + 
+  theme(text = element_text(size=15))
+```
+
+Les meilleurs taux de prédiction sont obtenus avec 17 et 25 voisins, soit `r preci_knn_17`, pour la suite on choisira de conserver 17 voisins.
+
+------------------------------------------------------------------------
+
+-   Matrice de confusion avec 17 voisins
+
+```{r, include=FALSE}
+knn_17 <- knn(train = x.train, test = x.test, cl = y.train , k = 17)
+TB = table(predicted = knn_17, true = y.test)
+lvs <- c("no", "yes")
+truth_2 <- factor(rep(lvs, times = c(9940, 1363)),
+                levels = rev(lvs))
+pred_2 <- factor(
+  c(
+    rep(lvs, times = c(9775, 220)),
+    rep(lvs, times = c(1027, 281))),
+  levels = rev(lvs))
+```
+
+```{r}
+# save(knn_17, file = "projet_knn_17.Rdata")
+```
+
+```{r}
+load("projet_knn_17.Rdata")
+```
+
+```{r}
+# Matrice de confusion avec la meilleure valeure de k
+table <- data.frame(caret::confusionMatrix(pred_2, truth_2)$table)
+
+plotTable <- table %>%
+  mutate(goodbad = ifelse(table$Prediction == table$Reference, "good", "bad")) %>%
+  group_by(Reference) %>%
+  mutate(prop = Freq/sum(Freq))
+
+ggplot(data = plotTable, mapping = aes(x = Reference, y = Prediction, fill = goodbad, alpha = prop)) +
+  geom_tile() +
+  geom_text(aes(label = Freq), vjust = .5, fontface  = "bold", alpha = 1,size = 15) +
+  scale_fill_manual(values = c(good = "#228833", bad = "#cb2027")) +
+  theme_bw() +
+  xlim(rev(levels(table$Reference))) +
+theme(text = element_text(size=15)) +
+xlab("True Value")
+```
+
+```{r, include=FALSE}
+knn_17 <- knn(train = x.train, test = x.test, cl = y.train , k = 17)
+TB_17 = table(predicted = knn_17, true = y.test)
+precision.knn.17 = round((TB[1]+TB[4])/sum(TB)*100,2)
+precision.knn.17
+TB_17
+```
+
+Avec 17 voisins, on obtient une précision de `r precision.knn.17`%.
+
+<!-- le fait fait de choisir le meilleur nombre de voisins ne nous a pas fait gagner énormément en précision. -->
+
+# LDA/QDA - Support Vector Machine
+
+------------------------------------------------------------------------
+
+```{r, include=FALSE}
+vis_dat(data, palette = "default")
+```
+
+```{r}
+data_2 <- data[,-c(9,16)]
+
+data_2$job <- fct_recode(data_2$job, NULL = "unknown")
+data_2$education <- fct_recode(data_2$education, NULL = "unknown")
+
+data_2<- data_2%>% tidyr::drop_na()
+```
+
+```{r}
+# data_2 <- data_2[,-15]
+```
+
+```{r}
+set.seed(1)
+split_data <- initial_split(data_2, prop = 0.75, strata = y)
+data_train <- training(split_data)
+data_test <- testing(split_data)
+```
+
+```{r}
+lda_mod<-discrim_linear() %>%
+set_mode("classification") %>%
+set_engine("MASS")
+qda_mod<-discrim_quad() %>%
+set_mode("classification") %>%
+set_engine("MASS")
+knn_mod<-nearest_neighbor() %>%
+set_mode("classification") %>%
+set_engine("kknn")
+svm_linear_mod <- svm_linear() %>%
+set_mode("classification") %>%
+set_engine("kernlab")
+svm_rad_mod <- svm_rbf() %>%
+set_mode("classification") %>%
+set_engine("kernlab")
+```
+
+```{r}
+dat_rec<- data_train %>% recipe(y~.)
+
+dat_rec_qda <- data_train %>% recipe(y~job+
+                   marital+
+                   education+
+                   month+
+                   default+
+                   housing+
+                   loan,data = data_train)
+```
+
+```{r}
+lda_wf <- workflow() %>%
+add_model(lda_mod) %>%
+add_recipe(dat_rec)
+qda_wf <- workflow() %>%
+add_model(qda_mod) %>%
+add_recipe(dat_rec_qda)
+knn_wf <- workflow() %>%
+add_model(knn_mod %>% set_args(neighbors=17)) %>%
+add_recipe(dat_rec)
+svm_lin_wf <- workflow() %>%
+add_model(svm_linear_mod %>% set_args(cost=tune()))%>%
+add_recipe(dat_rec)
+svm_rad_wf <- workflow() %>%
+add_model(svm_rad_mod %>% set_args(cost=tune(),
+rbf_sigma=tune())) %>%
+add_recipe(dat_rec)
+```
+
+```{r}
+
+qda_fit<- qda_mod %>% fit(y~job+
+                   marital+
+                   education+
+                   month+
+                   default+
+                   housing+
+                   loan,data = data_train)
+```
+
+```{r}
+load("projet_lda_1.Rdata")
+```
+
+```{r}
+df_folds<- vfold_cv(training(split_data),v=5,strata=y)
+```
+
+```{r}
+# knn_grid <- grid_regular(neighbors(), levels = 1)
+# tune_res_knn <- tune_grid(knn_wf,
+# resamples = df_folds,
+# grid = knn_grid)
+```
+
+::: panel-tabset
+### SVM linéaire
+
+petit problème...
+
+```{r}
+# # SVM linéaire
+# svm_lin_grid <- grid_regular(cost(), levels = 5)
+# tune_res_svm_lin <- tune_grid(svm_lin_wf, resamples = df_folds,
+# grid = svm_lin_grid)
+# svm_lin_grid <- load(file = "svm_lin_grid.Rdata")
+# tune_res_svm_lin <- load(file = "projet_svm_lin_1.Rdata")
+# autoplot(tune_res_svm_lin)
+
+```
+
+Le modèle gagne en surface, mais l'aire en dessous de la courbe diminue.
+
+```{r}
+# # SVM linéaire meilleur modèle
+# svm_lin_best <- tune_res_svm_lin %>% select_best(metric = "accuracy")
+# svm_lin_final_wf <- svm_lin_wf %>%
+# finalize_workflow(svm_lin_best)
+```
+
+```{r}
+load(file = "tune_svm_rad.Rdata")
+load(file = "svm_rad_grid.Rdata")
+```
+
+```{r}
+# # SVM radial
+# svm_rad_grid <- svm_rad_wf %>% parameters() %>%
+# grid_regular(levels=5)
+# tune_res_svm_rad <- tune_grid(svm_rad_wf,
+# resamples = df_folds,
+# grid = svm_rad_grid)
+# autoplot(tune_res_svm_rad)
+```
+
+### SVM radial
+
+```{r}
+autoplot(tune_res_svm_rad)
+```
+
+### Comparaisons
+
+```{r}
+# SVM radial meilleur modèle
+svm_rad_best <- tune_res_svm_rad %>% select_best(metric = "accuracy")
+svm_rad_final_wf <- svm_rad_wf %>%
+finalize_workflow(svm_rad_best)
+```
+
+```{r}
+Collect <-function(x){last_fit(x,split=split_data) %>% collect_predictions()}
+
+lda_result<-lda_wf %>% Collect
+qda_result<-qda_wf %>% Collect
+# svm_lin_result<-svm_lin_final_wf %>% Collect
+# ,rep('svm_lin',p)
+# svm_lin_result,
+svm_rad_result<-svm_rad_final_wf %>% Collect
+knn_result<-knn_wf %>% Collect
+
+p<-nrow(split_data %>% testing())
+models <-c(rep("lda",p),
+rep("qda",p),
+rep('svm_rad',p),
+rep('knn17',p))
+result<-rbind(lda_result,
+qda_result,
+svm_rad_result,
+knn_result)
+result$model<-models
+result %>%
+  group_by(model) %>%
+roc_curve(y, .pred_no) %>%
+autoplot()
+```
+:::
+
+```{r}
+# group_by(model) %>%
+# roc_curve(y, .pred_no) %>%
+# autoplot()
+```
+
+# CART {transition="slide"}
+
+```{r}
+# control.max <- rpart.control(cp = 0, max.depth = 0, minbucket = 1, minsplit = 1)
+# tree <- rpart(y~. , data = data_train, control = control.max,
+#               parms = list(split = "information"))
+```
+
+```{r}
+# save(tree, file = "rpart_arbre_global.Rdata")
+```
+
+```{r}
+load("rpart_arbre_global.Rdata")
+```
+
+```{r}
+plot(tree)
+```
+
+```{r, include=FALSE}
+plotcp(tree)
+```
+
+------------------------------------------------------------------------
+
+Optimisation automatique avec `Caret`
+
+```{r}
+# registerDoParallel(cores = 6)
+# # lancement de la commande à l'identique
+# ctrlCv <- trainControl(method = "repeatedcv", 
+#                        repeats = 3, number = 10)
+# rpartGrid <- expand.grid(cp = c(0.0001, 0.0005, 0.0008, seq(0.001, 0.1, 0.001)))
+# caret_rpart <- train(y ~ .,
+#   data = data_train, method = "rpart", na.action = na.omit,
+#   trControl = ctrlCv, tuneGrid = rpartGrid
+# )
+```
+
+```{r}
+# save(caret_rpart, file = "caret_rpart_model_global.Rdata")
+```
+
+```{r}
+load("caret_rpart_model_global.Rdata")
+```
+
+```{r}
+prp(caret_rpart$finalModel)
+```
+
+```{r}
+# # Optimisation automatique avec `Caret`
+# 
+# registerDoParallel(cores = detectCores() - 2)
+# #lancement de la commande à l'identique
+# ctrlCv <- trainControl(method = "repeatedcv", repeats = 10)
+# rpartGrid <- expand.grid(cp = tree$cp[,1])
+# rpart.caret <- train(y~., data = data_train, method="rpart",
+#                               trControl = ctrlCv, tuneGrid = rpartGrid, na.action = na.rpart)
+# stopImplicitCluster()
+# # rpart.caret
+# # rpart.caret$bestTune
+# caret_final_model<- rpart.caret$finalModel
+```
+
+```{r}
+# save(rpart.caret, file = "rpart.caret_model_global.Rdata")
+```
+
+```{r}
+load("rpart.caret_model_global.Rdata")
+```
+
+```{r, include=FALSE}
+be<- rpart.caret$bestTune
+```
+
+le meilleur paramètre de complexité pour cet arbre élagué est de `r be[1,1]`
+
+```{r}
+# save(caret_final_model, file = "projet_caret_1.Rdata")
+```
+
+------------------------------------------------------------------------
+
+### Test de notre CART réalisé avec `Caret`
+
+```{r}
+load("projet_caret_1.Rdata")
+```
+
+```{r}
+# arbre <- rpart(y~., data = data_train, control = rpart.control(cp =rpart.caret$bestTune[1,1]))
+```
+
+```{r}
+# save(arbre, file = "arbre.caret_bestTune.Rdata")
+```
+
+```{r}
+load("arbre.caret_bestTune.Rdata")
+```
+
+```{r}
+# confusionMatrix(data = predict(rpart.caret$finalModel, data_test[,-17], type='class'),
+#                 reference = pull(data_test, y), 
+#                 mode = "everything", positive = "yes")
+```
+
+::: panel-tabset
+### Qualité du modèle
+
+```{r}
+confusionMatrix(data = predict(arbre, data_test, type='class'),
+                reference = pull(data_test, y), 
+                mode = "everything", positive = "no")
+```
+
+### Courbe ROC
+
+```{r, warning=FALSE}
+pred_rpart.caret <- predict(arbre, data_test, type='prob')
+
+data.frame(pred_model1 = pred_rpart.caret[,1], obs = (pull(data_test, y)=="no")*1) %>%
+  ggplot()+aes(d=obs,m=pred_model1)+geom_roc() + style_roc() 
+```
+
+### Métriques
+
+```{r}
+evalmod(scores = pred_rpart.caret[,1], labels = (pull(data_test, y)=="no")*1, mode="basic") %>%
+  autoplot(c("error", "accuracy", "specificity", "sensitivity", "precision", "fscore"))
+```
+:::
+
+------------------------------------------------------------------------
+
+### Performance
+
+```{r}
+par(mfrow = c(2,2))
+pred <- prediction(pred_rpart.caret[,1], (pull(data_test, y)=="no")*1)
+perf <- performance(pred, measure = "tpr", x.measure = "fpr")
+#
+performance(pred, measure = "acc") %>% plot(col="red")
+performance(pred, measure = "tpr") %>% plot(col="red")
+performance(pred, measure = "tnr") %>% plot(col="blue", add = TRUE)
+performance(pred, measure = "prec") %>% plot(col="red")
+performance(pred, measure = "fpr") %>% plot(col="red")
+```
+
+------------------------------------------------------------------------
+
+### Optimisation en utilisant ROC et AUC
+
+::: panel-tabset
+```{r}
+
+# registerDoParallel(cores = detectCores() - 2)
+# #lancement de la commande à l'identique
+# ctrlCv.auc <- trainControl(method = "repeatedcv", repeats = 10, 
+#                            summaryFunction = twoClassSummary, classProbs = TRUE)
+# rpartGrid <- expand.grid(cp = tree$cp[,1])
+# rpart.caret.auc <- train(y~., data = data_train, method="rpart",
+#                                  trControl = ctrlCv.auc, tuneGrid = rpartGrid, na.action = na.rpart,
+#                                  metric = "ROC")
+```
+
+```{r}
+# save(rpart.caret.auc, file = "rpart.caret.auc_model.Rdata")
+```
+
+```{r}
+load("rpart.caret.auc_model.Rdata")
+```
+
+```{r}
+rpart_caret_auc_best <- rpart.caret.auc$bestTune
+```
+
+Avec la métrique *ROC* on trouve pour meilleure complexité `r rpart_caret_auc_best[1,1]`.
+
+```{r}
+# visualisation
+# rpart.caret.auc
+rpart.caret.auc$finalModel
+# CART_final_model <- rpart.caret.auc$finalModel
+```
+
+Algorithme CART
+
+```{r}
+# save(CART_final_model, file = "CART_final_model.Rdata")
+```
+
+```{r}
+load("CART_final_model.Rdata")
+```
+
+```{r}
+arbre_auc <- rpart(y~., data = data_train, control = rpart.control(cp =rpart.caret.auc$bestTune[1,1], metric = "ROC"))
+```
+
+```{r}
+# save(arbre_auc, file = "arbre_auc.Rdata")
+```
+
+```{r}
+load("arbre_auc.Rdata")
+```
+
+### Matrice de confusion
+
+```{r}
+# confusionMatrix(data = predict(arbre_auc, data_test, type='class'),
+#                 reference = pull(data_test, y), 
+#                 mode = "everything", positive = "no")
+```
+
+```{r}
+conf_mat_1<- confusionMatrix(data = predict(arbre_auc, data_test, type='class'),
+                reference = pull(data_test, y), 
+                mode = "everything", positive = "no")
+conf_mat_1$table %>%
+  addmargins() %>%
+  kable() %>% 
+  add_header_above(c(" ","Prédiction" = 2," ")) %>%
+  column_spec(c(4), bold = T, background ="#F4F6F6" ,width="2cm")   %>%
+  column_spec(1,bold=T) %>%
+  row_spec(c(3), bold = T, background ="#F4F6F6" )   %>% 
+  row_spec(c(0), bold = T) %>% 
+  kable_styling(position="center",
+                full_width = FALSE,
+                bootstrap_options = "bordered",
+                latex_options = "hold_position")
+```
+
+### Courbe ROC
+
+```{r, warning=FALSE}
+pred_rpart.caret.auc <- predict(arbre_auc, data_test[,-17], type='prob')
+data.frame(pred_model1 = pred_rpart.caret.auc[,1], obs = (pull(data_test, y)=="no")*1) %>%
+  ggplot()+aes(d=obs,m=pred_model1)+geom_roc() + style_roc()
+```
+
+### Performance
+
+```{r}
+evalmod(scores = pred_rpart.caret.auc[,1], labels = (pull(data_test, y)=="no")*1, mode="basic") %>%
+  autoplot(c("error", "accuracy", "specificity", "sensitivity", "precision", "fscore"))
+```
+:::
+
+------------------------------------------------------------------------
+
+```{r, warning=FALSE}
+prp(CART_final_model)
+```
+
+```{r}
+set.seed(1)
+split_data <- initial_split(data, prop = 0.75, strata = y)
+data_train <- training(split_data)
+data_test <- testing(split_data)
+```
+
+# Random Forest {transition="zooom"}
+
+------------------------------------------------------------------------
+
+```{r}
+# rf <- randomForest(y ~ .,
+#   data = data_train, method = "class", 
+#   parms = list(split = "gini"), na.action = na.omit,
+#   summaryFunction = twoClassSummary, 
+#   classProbs = FALSE,
+#   sampling = "down"
+# )
+# na.action =  na.roughfix : For numeric variables, NAs are replaced with column medians. 
+# For factor variables, NAs are replaced with the most frequent levels.
+# other values : na.omit, na.fail (y)
+```
+
+```{r}
+# save(rf, file = "rf_classique.Rdata")
+```
+
+```{r}
+load("rf_classique.Rdata")
+```
+
+```{r, warning=FALSE}
+# nvar <- ncol(data)
+# bag <- randomForest(y ~ .,
+#   data = data_train, method = "class", 
+#   parms = list(split = "gini"), mtry = nvar, na.action = na.omit, importance = TRUE,
+#   summaryFunction = twoClassSummary, 
+#   classProbs = FALSE,
+#   sampling = "down"
+# )
+```
+
+```{r}
+# save(bag, file = "bag_classique.Rdata")
+```
+
+```{r}
+load("bag_classique.Rdata")
+```
+
+::: panel-tabset
+### OOB et err.rate
+
+```{r}
+# Observer les différentes sorties notamment : `oob.times`, `err.rate`, `votes`.
+## Etude et optimisation manuelle
+
+rf$mtry
+#nbr de fois ou l'individu est oob
+head(rf$oob.times)
+mean(rf$oob.times)
+mean(rf$oob.times)/rf$ntree
+# votes
+head(rf$votes)
+# evolution du tx d'erreur en fct du nbr d'arbres
+head(rf$err.rate) # erreurs OOB
+```
+
+```{r}
+# - Représenter sur le même graphique les erreurs OOB des forêts aléatoires et des bagging construits, en utilisant `ggplot2` et éventuellement la fonction `pivot_longuer` du package `tidyr`.
+P1<-data.frame(rf = rf$err.rate[,1],
+           bag = bag$err.rate[,1],
+           ntree = 1:500) %>%
+  pivot_longer(col = c("rf", "bag"), names_to = "model",
+                          values_to = "error") %>% 
+  ggplot() + 
+  aes(x = ntree, y = error, col = model) +
+  geom_line() +
+  lims(y = c(0.08, 0.16))
+```
+
+```{r}
+# Représenter sur le même graphique les erreurs des forêts aléatoires sur tous les individus et selon la variable `y`.
+df_error <- data.frame(rf$err.rate, ntree = 1:500)
+P2<-df_error %>% pivot_longer(cols = c("OOB", "no", "yes"), # les colonnes que l'ont pivotent sont les colonnes où sont les valeur
+                          names_to = "type",
+                          values_to = "error") %>% 
+  ggplot() +
+  aes(x = ntree, y = error, col = type) +
+  geom_line() +
+  lims(y = c(0.03, 0.66))
+```
+
+### tree/error
+
+```{r}
+P1 + P2
+```
+
+### Analyses
+
+```{r, include=FALSE}
+summary(data$y)
+prop_yes <- sum(data$y == "yes")/(sum(data$y == "yes") + sum(data$y == "no"))
+```
+
+Le OOB est est une moyenne ponderée des yes et des no donc cest normale qu'elle soit entre les deux il y a déséquillibre entre yes et no les *yes* représentent `r round(prop_yes,4)`% de nos données, donc si on arrive mieux à prédire les no que les yes c'est tout simplement parce que nous ne disposont pas d'assez de *yes* dans l'échantillon d'entraînement.
+
+```{r}
+# modifications du nbr de variables choisies à chaque étapes pour visualiser les erreurs OOB
+# sqrt(nvar)
+# log(nvar)
+rfq1 <- randomForest(y~.,
+                     data = data_train, method = "class", ntree = 500,
+                     parms = list(split = "gini"), mtry = 1, na.action = na.omit)
+rfq3 <- randomForest(y~.,
+                     data = data_train, method = "class", ntree = 500,
+                     parms = list(split = "gini"), mtry = 3, na.action = na.omit)
+rfq5 <- randomForest(y~.,
+                     data = data_train, method = "class", ntree = 500,
+                     parms = list(split = "gini"), mtry = 5, na.action = na.omit)
+rfq8 <- randomForest(y~.,
+                     data = data_train, method = "class", ntree = 500,
+                     parms = list(split = "gini"), mtry = 8, na.action = na.omit)
+rfq12 <- randomForest(y~.,
+                     data = data_train, method = "class", ntree = 500,
+                     parms = list(split = "gini"), mtry = 12, na.action = na.omit)
+```
+:::
+
+------------------------------------------------------------------------
+
+### Importance des variables {.smaller}
+
+```{r}
+data.frame(nb_trees = 1:rfq1$ntree,
+           random_forest_q1 = rfq1$err.rate[, 1],
+           random_forest_q3 = rfq3$err.rate[, 1],
+           random_forest_q5 = rfq5$err.rate[, 1],
+           random_forest_q8 = rfq8$err.rate[, 1],
+           random_forest_q12 = rfq12$err.rate[, 1]) %>% 
+  tidyr::pivot_longer(cols = starts_with("random_forest_q"),
+                      names_to = "model",
+                      values_to = "OOB_error") %>% 
+  ggplot() + aes(x = nb_trees, y = OOB_error, col = model) +
+  geom_line() +
+  ylim(c(0.08, 0.13)) +
+  theme_minimal()
+```
+
+-   pas assez de variables discrimantes pour qu'on ait q=1 pertinent, c'est pourquoi on a un pic de début assez haut pour q1, on voit qu'en fonction du nbr de q le premier pic descend. random par les echantillons boostrap, et random par le bagging.
+
+```{r}
+### choix de profondeur en bagging
+# avec mtry = 3
+errprofbag <- NULL
+prof <- c(2, 5, 10, 15, 20, 30, 40, 50, 100)
+i <- 1
+for (k in prof) {
+  rfprobag <- randomForest(y ~ .,
+    data = data_train, method = "class", ntree = 200,
+    parms = list(split = "gini"), maxnodes = k, mtry = 5, na.action = na.omit, importance = TRUE)
+  errprofbag[i] <- rfprobag$err.rate[200, 1]
+  i <- i + 1
+}
+```
+
+```{r}
+# data.frame(prof = prof, error = errprofbag) %>% 
+#   ggplot() + aes(x = prof, y = error) +
+#   geom_line() + ylim(c(0.01, 0.15))
+```
+
+```{r}
+## choix de profondeur en rf
+errprofrf <- NULL
+i <- 1
+for (k in prof) {
+  rfpro <- randomForest(y ~ .,
+    data = data_train, method = "class", ntree = 200, mtry = 2,
+    parms = list(split = "gini"), maxnodes = k, na.action = na.omit
+  )
+  errprofrf[i] <- rfpro$err.rate[200, 1]
+  i <- i + 1
+}
+```
+
+```{r}
+# data.frame(prof = prof, error_bag = errprofbag, error_rf = errprofrf) %>% 
+#   ggplot() + aes(x = prof, y = error_rf) +
+#   geom_line() + ylim(c(0.05, 0.15))
+```
+
+------------------------------------------------------------------------
+
+:::: panel-tabset
+### Profondeur
+
+```{r}
+data.frame(prof = prof, error_bag = errprofbag, error_rf = errprofrf) %>% 
+  tidyr::pivot_longer(cols = starts_with("err"), names_to = "model", values_to = "error") %>% 
+  ggplot() + aes(x = prof, y = error, col = model) +
+  geom_line()  + ylim(c(0.01, 0.15))
+```
+
+### erreur.min
+
+```{r}
+fig(5,3)
+# Récupérer la taille de forêt minimisant l’erreur OOB. utiliser la doc de `which.min`.
+# evolution du tx d'erreur en fct du nbr d'arbres
+rf1 <- rfq8
+plot(rf1$err.rate[, "OOB"],
+     type = "l", xlab = "nombre d'itérations",
+     ylab = "erreur", col = "mediumpurple3") # erreur oob
+abline(h = rf1$err.rate[237, "OOB"], col="red", lwd=1, lty=2)
+
+#
+#sd()
+```
+
+::: {.absolute bottom="50"}
+Le nombre d'arbres minimisant l'erreur OOB est `r which.min(rf1$err.rate[, "OOB"])`, qui atteint la valeur de `r round(rf1$err.rate[237, "OOB"],3)`%.
+:::
+::::
+
+------------------------------------------------------------------------
+
+::: panel-tabset
+### Hétérogénéité et variance
+
+```{r, include=FALSE}
+rf1$err.rate[329, "OOB"]
+```
+
+```{r}
+# variables les plus importantes dans la construction des arbres
+# rf_mtry <- randomForest(y ~ .,
+#   data = data_train, method = "class", ntree = 200, mtry = 4,
+#   parms = list(split = "gini"), na.action = na.omit,
+#   keep.forest = TRUE, importance = TRUE
+# )
+```
+
+```{r}
+# save(rf_mtry, file = "rf_mtry.Rdata")
+```
+
+```{r}
+load("rf_mtry.Rdata")
+```
+
+```{r}
+# lobstr::obj_size(rf)
+
+#rf<- randomForest(AHD~.,
+                  #data = data_train, method = "class", ntree = 1000,
+                  #mtry = 2, parms = list(split = "gini"), na.action = #na.omit, keep.forest = TRUE, importance)
+#
+#lobstr::obj_size(rf)
+# il faut avoir précisé importance=TRUE lors de la construction de la forêt
+importance(rf_mtry)
+```
+
+### Variables importantes
+
+```{r}
+varImpPlot(rf_mtry, main = "Random Forest", cex = 0.8)
+```
+:::
+
+<!-- Meamdecrease accuracy, on regarde ce que devient l'erreur de précision qd on mélange les valeurs de c1 entre les individus et que l'on essait de repredire la valeur de ces individus -->
+
+<!-- Meamdecrease accuracy, on utilise cette variable pour faire la scission et qu'on veut voir de combien baisse l'hétérogénéité. -->
+
+<!-- Meamdecrease gini, mesure d'hétérogénéité dans une feuillle, on ragarde la baisse d'hétérogénéité ds une feuille. -->
+
+<!-- l'objectif premier du dossier, bien faire la scission, appliquer chacune des methodes vues ensembles, mettre en valeurs les boservation, et finalement dire quel modèle on choisit. -->
+
+<!-- Création/définition du workflow avec la paramètre `mtry` à optimsier. -->
+
+```{r}
+rec <- recipe(y ~ ., data = data_train) # déjà créé avant
+random_forest_spec <- rand_forest(mtry = tune()) %>% 
+  set_engine("randomForest", importance = TRUE) %>%
+  set_mode("classification")
+tune_rf_wf <- workflow() %>% 
+  add_model(random_forest_spec) %>% 
+  add_recipe(rec)
+```
+
+```{r}
+# # Recherche du paramètre `mtry` optimal parmi les entiers de 1 à 16 via une validation croisée.
+# data_cv <- vfold_cv(data_train)
+# # vfold_cv(data_train, repeat = 10) on peut utiliser cette commande si l'estimation ne prend pas trop de temps pour estimer le paramètre optimal.
+# 
+# mtry_grid <- data.frame(mtry = 1:16)
+# 
+#   rf_tune_res <- tune_grid(
+#     tune_rf_wf, # le workflow
+#     resamples = data_cv, # les échantillons de validation croisée
+#     grid = mtry_grid, # la grille des valeurs à tester
+#     metrics = metric_set(accuracy) # la métrique pour choisir la meilleur valeur
+#   )
+```
+
+```{r}
+# save(rf_tune_res, file = "rf_tune_res.Rdata")
+```
+
+```{r}
+load("rf_tune_res.Rdata")
+```
+
+```{r, include=FALSE}
+autoplot(rf_tune_res)
+```
+
+```{r}
+#rf_tune_res %>% show_best("accuracy")
+```
+
+```{r}
+# library(doParallel)
+# #cl <- makePSOCKcluster(cores = 2)
+# registerDoParallel(cores = 8)
+# # réalisation des commandes nécéssitant la parallélisation
+# stopImplicitCluster()# ferme le cluster
+```
+
+```{r}
+# args(rand_forest)
+# translate(random_forest_spec)
+# extract_parameter_set_dials(random_forest_spec)
+```
+
+```{r, include=FALSE}
+mtry()
+trees()
+min_n()
+```
+
+```{r}
+random_forest_spec <- rand_forest(mtry = tune(), min_n = tune(), trees = tune()) %>% 
+  set_engine("randomForest", importance = TRUE) %>% 
+  set_mode("classification")
+
+tune_rf_wf <- workflow() %>% 
+  add_model(random_forest_spec) %>% 
+  add_recipe(rec)
+```
+
+```{r}
+# parameters(tune_rf_wf)
+```
+
+```{r}
+# expand_grid(mtry = 1:3, trees = c(100, 50, 200, 500))
+# expand.grid(x = 1:3, trees = c(100, 50, 200, 500))
+# crossing(x = 1:3, trees = c(100, 50, 200, 500))
+```
+
+```{r, warning=FALSE, include=FALSE}
+# préciser ou changer les étendues
+rf_param <- parameters(tune_rf_wf) %>% 
+  update(mtry = mtry(c(1,3)), trees = trees(c(50,50)))# depreceated
+rf_param <- extract_parameter_set_dials(tune_rf_wf) %>% 
+  update(mtry = mtry(c(1,3)), trees = trees(c(50,50)))
+# grid_regular(rf_param, levels = 2)
+grid_regular(rf_param, levels = c(mtry = 3, trees = 3, min_n = 4))
+```
+
+```{r}
+# registerDoParallel(cores = 8)
+# 
+# rf_tune_res_2 <- tune_grid(
+#     tune_rf_wf, 
+#     resamples = data_cv, 
+#     grid = grid_regular(rf_param, levels = c(mtry = 3, trees = 3, min_n = 3)), 
+#     metrics = metric_set(accuracy)
+#   )
+# stopImplicitCluster()# ferme le cluster
+```
+
+```{r}
+# save(rf_tune_res_2, file = "rf_tune_res_2.Rdata")
+```
+
+```{r}
+load("rf_tune_res_2.Rdata")
+```
+
+```{r, include=FALSE}
+autoplot(rf_tune_res_2)  +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+```{r}
+ranger_rf_spec <- rand_forest(mtry = tune(), min_n = tune(), trees = tune()) %>% 
+  set_engine("ranger", verbose = TRUE) %>% 
+  set_mode("classification")
+
+tune_ranger_wf <- workflow() %>% 
+  add_model(ranger_rf_spec) %>% 
+  add_recipe(rec)
+
+```
+
+```{r}
+# registerDoParallel(cores = 8)
+# ranger_tune_res <- tune_grid(
+#     tune_ranger_wf,
+#     resamples = data_cv,
+#     grid = grid_regular(rf_param, levels = c(mtry = 3, trees = 3, min_n = 4)),
+#     metrics = metric_set(accuracy)
+#     )
+# stopImplicitCluster()# ferme le cluster
+```
+
+```{r}
+# save(ranger_tune_res, file = "ranger_tune_res.Rdata")
+```
+
+```{r}
+load("ranger_tune_res.Rdata")
+```
+
+------------------------------------------------------------------------
+
+::: panel-tabset
+### Noeuds et précision
+
+```{r}
+autoplot(rf_tune_res)
+```
+
+```{r, include=FALSE}
+ranger_tune_res %>% show_best("accuracy")
+```
+
+```{r, warning=FALSE}
+best_rf_parameters <- select_best(rf_tune_res_2)
+#
+final_tune_rf_wf <- tune_rf_wf %>% 
+  finalize_workflow(best_rf_parameters)
+#
+# rf_fit <- final_tune_rf_wf %>% last_fit(data_split)
+# rf_fit %>% collect_metrics() 
+# rf_fit %>% collect_predictions() 
+
+set.seed(1)
+train_rf_model <- final_tune_rf_wf %>% fit(data = data_train)
+# ou cosntruction sur les données d'entrainement
+# et évaluation sur les données de test en même temps
+rf_fit <- final_tune_rf_wf %>% last_fit(split_data)
+# rf_fit %>% collect_metrics()
+```
+
+```{r, include=FALSE}
+rf_fit %>% collect_predictions()
+```
+
+### Courbe ROC
+
+```{r}
+rf_fit %>% collect_predictions() %>% roc_curve(y, .pred_no) %>% autoplot()
+
+# ggroc(rf_fit %>% collect_predictions() %>% roc_curve(y, .pred_no), legacy.axes = TRUE) +
+#   geom_ribbon(aes(ymin = 0, ymax = roc_obj$auc, fill = "Zone sous la courbe ROC"), alpha = 0.2) +
+#   scale_fill_manual(value = couleur_1)
+```
+:::
+
+```{r}
+## Modèle sur données complètes et utilisation
+
+# final_rf_model <-  final_tune_rf_wf %>% 
+#   fit(data) # données complètes
+# save(final_rf_model, file = "my_rf_model.RData")
+```
+
+```{r}
+load("my_rf_model.RData")
+```
+
+------------------------------------------------------------------------
+
+```{r, include=FALSE}
+# chargement du modèle
+# load("my_rf_model.RData")
+# cette commande créera un objet du même nom qu'au départ
+predict(final_rf_model, new_data = data_test) # par défaut type = "class"
+predict(final_rf_model, new_data = data_test, type = "prob")
+predict(final_rf_model, new_data = data_test, type = "raw") # change juste le format de sortie
+```
+
+```{r}
+final_rf_model_test <- final_rf_model %>% augment(new_data = data_test) 
+```
+
+Notre modèle semble avoir une précision sur les données de test presque suspecte.
+
+::::: columns
+::: {.column .smaller width="50%"}
+```{r}
+conf_mat_2<- conf_mat(final_rf_model_test, truth = y, estimate = .pred_class)
+conf_mat_2$table %>%
+  addmargins() %>%
+  kable() %>% 
+  add_header_above(c(" ","Prédiction" = 2," ")) %>%
+  column_spec(c(4), bold = T, background ="#F4F6F6" ,width="2cm")   %>%
+  column_spec(1,bold=T) %>%
+  row_spec(c(3), bold = T, background ="#F4F6F6" )   %>% 
+  row_spec(c(0), bold = T) %>% 
+  kable_styling(position="center",
+                full_width = FALSE,
+                bootstrap_options = "bordered",
+                latex_options = "hold_position")
+```
+:::
+
+::: {.column .smaller width="50%"}
+```{r}
+final_rf_model_test %>% roc_curve(truth = y, estimate = .pred_no) %>% autoplot()
+```
+:::
+:::::
+
+# Boosting {transition="concave"}
+
+```{r}
+# Adaboost
+data_boost <- data
+set.seed(1)
+split_data_boost <- initial_split(data_boost, prop = 0.75, strata = y)
+data_boost_train <- training(split_data_boost)
+data_boost_test <- testing(split_data_boost)
+```
+
+```{r}
+# library(ada)
+boost <- ada(y ~ .,
+  data = data_boost_train, type = "discrete", loss = "exponential",
+  control = rpart.control(cp = 0), iter = 50, nu = 1
+)
+```
+
+```{r, include=FALSE}
+# Observer l'objet/modèle créé
+boost
+summary(boost)
+# plot(boost)
+```
+
+```{r, include=FALSE}
+plot(boost)
+```
+
+```{r}
+# En jouant sur l’argument control de ada, on peut jouer sur le type d’arbre construit à chaque itération. Créer un objet boostump correspondant à un boosting sur des stumps, c’est-à-dire des arbes à 2 feuilles avec 500 itérations.
+boostump <- ada(y ~ .,
+  data = data_boost_train, type = "discrete", loss = "exponential",
+  control = rpart.control(maxdepth=1,cp=-1,minsplit=0,xval=0), iter = 50, nu = 1)
+```
+
+```{r, include=FALSE}
+# Observer l'objet/modèle créé
+boostump
+# summary(boostump)
+```
+
+```{r, include=FALSE}
+plot(boostump)
+```
+
+```{r}
+boostumpen01 <- ada(y ~ .,
+  data = data_boost_train, type = "discrete", loss = "exponential",
+  control = rpart.control(maxdepth=1,cp=-1,minsplit=0,xval=0), iter = 50, nu = 0.1)
+```
+
+```{r, include=FALSE}
+plot(boostumpen01)
+```
+
+```{r}
+# Réaliser des boostings en intégrant une pénalisation (boostpen01 pour une pénalisation à 0.1 et boostpen001 pour une pénalisation à 0.01).
+boostpen01 <- ada(y ~ .,
+  data = data_boost_train, type = "discrete", loss = "exponential",
+  control = rpart.control(cp = 0), iter = 50, nu = 0.1
+)
+```
+
+```{r, include=FALSE}
+# Observer l'objet/modèle créé
+boostpen01$confusion
+```
+
+------------------------------------------------------------------------
+
+::: panel-tabset
+### comparaison de arbres
+
+```{r}
+boost
+# summary(boost)
+```
+
+### Stump
+
+```{r}
+boostump
+# summary(boostump)
+```
+
+### Arbre pénalisé
+
+```{r}
+boostpen01
+# summary(boostpen01)
+```
+
+### Stump pénalisé
+
+```{r}
+boostumpen01
+# summary(boostumpen01)
+```
+:::
+
+------------------------------------------------------------------------
+
+```{r}
+# par(mfrow = c(3,1))
+# plot(boost)+ 
+#   plot(boostpen01)+
+#   plot(boostump)
+```
+
+```{r}
+# Visualiser les erreurs (en apprentissage) avec le code suivant.
+niter <- 50
+data.frame(iter = 1:niter) %>% 
+  mutate(boost1 = boost$model$errs[1:niter, c("train.err")],
+         stump = boostump$model$errs[1:niter, c("train.err")],
+         pen01 = boostpen01$model$errs[1:niter, c("train.err")],
+         stumpen01 = boostumpen01$model$errs[1:niter, c("train.err")]) %>%
+  pivot_longer(cols = 2:5, names_to = "model", values_to = "error") %>%
+  ggplot() + aes(x = iter, y = error, color = model) + geom_line() +
+  labs(title = "Differents boosting models", x = "Iterations", y = "Errors") +
+  lims(y = c(0,0.35))
+```
+
+```{r}
+# # Optimisation de l'adaboost avec Caret
+# ncore <- 6
+# registerDoParallel(cores = ncore - 1)
+# # lancement de la commande à l'identique
+# ctrlCv <- trainControl(method = "repeatedcv", 
+#                        repeats = 2, number = 5)
+# adaGrid <- expand.grid(maxdepth = 10, 
+#                        iter = c(10, 20, 50, 100), 
+#                        nu = c(1, 0.01, 0.1))
+# caretada <- train(y ~ .,
+#   data = data_boost_train, method = "ada",
+#   trControl = ctrlCv, tuneGrid = adaGrid)
+# 
+# # fermeture du cluster
+# stopImplicitCluster()
+```
+
+```{r}
+# save(caretada, file = "projet_caret_adaboost.Rdata")
+```
+
+```{r}
+# load("projet_caret_adaboost.Rdata")
+```
+
+```{r, include=FALSE}
+# caretada
+# caretada$bestTune
+```
+
+```{r}
+# caretada$finalModel
+```
+
+```{r}
+# best_boost <- caretada$finalModel
+# #  iter maxdepth  nu
+# #  100        4  0.1
+# plot(best_boost, test = TRUE)
+```
+
+```{r}
+# Boosting et Tidymodel avec xgboost
+# args(boost_tree)
+```
+
+```{r}
+rec <- recipe(y ~ ., data = data_boost_train) # déjà créé avant
+rec_for_boost <- rec %>% 
+  step_dummy(all_nominal_predictors()) |> 
+  step_dummy(all_logical_predictors())
+  
+boost_spec <- boost_tree(trees = tune()) %>% 
+  set_engine("xgboost") %>% 
+  set_mode("classification")
+tune_boost_wf <- workflow() %>% 
+  add_model(boost_spec) %>% 
+  add_recipe(rec_for_boost)
+#
+# trees()
+```
+
+```{r}
+data_boost_cv <- vfold_cv(data_boost_train)
+```
+
+------------------------------------------------------------------------
+
+```{r}
+# library(xgboost)
+# boost_tune_res <- tune_grid(
+#     tune_boost_wf, 
+#     resamples = data_boost_cv, 
+#     grid = grid_regular(extract_parameter_set_dials(tune_boost_wf), levels = 5), 
+#     metrics = metric_set(accuracy)
+#   )
+```
+
+```{r}
+# save(boost_tune_res, file = "boost_tune_res_xgboost.Rdata")
+```
+
+```{r}
+load("boost_tune_res_xgboost.Rdata")
+```
+
+```{r}
+autoplot(boost_tune_res)  +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+```{r, include=FALSE}
+boostB_spec <- boost_tree(trees = tune(), tree_depth = tune(), learn_rate = tune()) %>% 
+  set_engine("xgboost") %>% 
+  set_mode("classification")
+tune_boostB_wf <- workflow() %>% 
+  add_model(boostB_spec) %>% 
+  add_recipe(rec_for_boost)
+#
+# trees()
+# tree_depth()
+# learn_rate()
+```
+
+------------------------------------------------------------------------
+
+```{r}
+# # utilisation de 8 coeurs pour la recherche du meilleur paramètre
+# 
+# registerDoParallel(cores = 8)
+# 
+# boostB_tune_res <- tune_grid(
+#     tune_boostB_wf, 
+#     resamples = data_boost_cv, 
+#     grid = grid_regular(extract_parameter_set_dials(tune_boostB_wf), levels = 3), 
+#     metrics = metric_set(accuracy)
+#   )
+# stopImplicitCluster()
+```
+
+```{r}
+# save(boostB_tune_res, file = "boostB_tune_res_xgboost.Rdata")
+```
+
+```{r}
+load("boostB_tune_res_xgboost.Rdata")
+```
+
+::: panel-tabset
+### Erreur apprentissage
+
+```{r}
+autoplot(boostB_tune_res)  +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+```{r, include=FALSE}
+boostB_tune_res %>% show_best("accuracy")
+best_parameters_boost <- select_best(boostB_tune_res)
+
+final_boost_wf <- tune_boostB_wf %>% 
+  finalize_workflow(best_parameters_boost)
+
+boost_fit <- final_boost_wf %>% fit(data = data_boost_train)
+boost_fit_on_test <- boost_fit %>% augment(new_data = data_boost_test) 
+boost_fit_on_test %>% 
+  accuracy(truth = y, estimate = .pred_class)
+```
+
+### Précision du modèle
+
+```{r}
+conf_mat(boost_fit_on_test, truth = y, estimate = .pred_class)
+```
+
+```{r}
+roc_auc(boost_fit_on_test, truth = y, estimate = .pred_no)
+```
+:::
+
+------------------------------------------------------------------------
+
+```{r}
+boost_fit_on_test %>% roc_curve(truth = y, estimate = .pred_no) %>% autoplot()
+```
+
+```{r}
+save(boost_fit_on_test, file = "projet_boosting_xgboost.Rdata")
+```
+
+# Conclusion {transition="convex"}
+
+Le modèle que l'on choisira est un modèle tel que le KNN qui est assez simple à mettre en place et fournit une bonne précision. Cepandant, si on veut encore plus de précision, on peut opter pour un modèle de SVM radiale, un Boosting ou encore un Random forest, même si ces derniers, ayant plusieurs paramètres à optimiser sont parfois beaucoup plus long à construire.

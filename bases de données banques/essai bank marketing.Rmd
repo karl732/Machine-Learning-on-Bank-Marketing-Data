@@ -1,0 +1,22 @@
+---
+title: "essai Bank marketing"
+author: "Karl Sondeji"
+date: "2023-03-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+df<- read.csv("bank-additional.csv", header = TRUE, sep = ";")
+head(df)
+str(df)
+view(df)
+```
+
+```{r}
+summary(df)
+```
+
