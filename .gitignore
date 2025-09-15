@@ -1,0 +1,52 @@
+# Fichiers de cache et sortie R/Quarto
+*_cache/
+*_files/
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+# Modèles R sauvegardés (fichiers volumineux)
+*.RData
+*.Rdata
+*.rdb
+*.rdx
+
+# Fichiers temporaires
+*.tmp
+*.temp
+*~
+.DS_Store
+Thumbs.db
+
+# Fichiers de sortie Quarto/R Markdown
+*.html
+*.pdf
+*.docx
+*.pptx
+
+# Dossiers de cache spécifiques au projet
+Project-Bank-Pierre-et-Karl_cache/
+Project-Bank-Pierre-et-Karl_files/
+Quarto-Bank-Marketing-Pierre-et-Karl_cache/
+Quarto-Bank-Marketing-Pierre-et-Karl_files/
+Quarto-marketing-bank_cache/
+Quarto-marketing-bank_files/
+Quarto-Project-Bank-Pierre-et-Karl_cache/
+
+# Fichiers de configuration IDE
+.vscode/
+.idea/
+*.Rproj
+
+# Logs
+*.log
+
+# Données sensibles (garder seulement les échantillons)
+# Décommenter si nécessaire :
+# *.csv
+# !train.csv
+
+# Fichiers système
+.htaccess
+.env
