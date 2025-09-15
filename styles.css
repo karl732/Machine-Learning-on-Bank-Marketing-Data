@@ -1,0 +1,220 @@
+/* Styles personnalisés pour la présentation Bank Marketing */
+
+/* Amélioration de la lisibilité générale */
+.reveal {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Titres */
+.reveal h1, .reveal h2, .reveal h3 {
+  color: #2E86AB;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+.reveal h1 {
+  font-size: 2.5em;
+  margin-bottom: 0.5em;
+}
+
+.reveal h2 {
+  font-size: 2em;
+  margin-bottom: 0.4em;
+}
+
+/* Amélioration des graphiques */
+.reveal .slides section img {
+  border: none;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Conteneurs flexibles pour les graphiques */
+.plot-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: auto;
+}
+
+/* Adaptation responsive */
+@media (max-width: 1024px) {
+  .reveal .slides section img {
+    max-width: 95%;
+  }
+  
+  .reveal h1 {
+    font-size: 2em;
+  }
+  
+  .reveal h2 {
+    font-size: 1.6em;
+  }
+}
+
+@media (max-width: 768px) {
+  .reveal .slides section img {
+    max-width: 90%;
+  }
+  
+  .reveal h1 {
+    font-size: 1.8em;
+  }
+  
+  .reveal h2 {
+    font-size: 1.4em;
+  }
+}
+
+/* Amélioration des tableaux */
+.reveal table {
+  margin: auto;
+  border-collapse: collapse;
+  border-spacing: 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.reveal table th {
+  background-color: #2E86AB;
+  color: white;
+  font-weight: bold;
+  padding: 12px;
+}
+
+.reveal table td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.reveal table tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+/* Code blocks */
+.reveal pre {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  border-left: 4px solid #2E86AB;
+}
+
+.reveal code {
+  background-color: #f8f9fa;
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: #A23B72;
+}
+
+/* Fragments et transitions */
+.reveal .fragment.highlight-current-blue {
+  opacity: 1;
+  visibility: inherit;
+}
+
+.reveal .fragment.highlight-current-blue.current-fragment {
+  color: #2E86AB;
+  font-weight: bold;
+}
+
+/* Panel tabs styling */
+.reveal .panel-tabset {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.reveal .panel-tabset .nav-tabs {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #2E86AB;
+}
+
+.reveal .panel-tabset .nav-tabs .nav-link {
+  color: #6c757d;
+  border: none;
+  padding: 12px 20px;
+  font-weight: 500;
+}
+
+.reveal .panel-tabset .nav-tabs .nav-link.active {
+  background-color: #2E86AB;
+  color: white;
+  border-bottom: 2px solid #2E86AB;
+}
+
+.reveal .panel-tabset .tab-content {
+  padding: 20px;
+  background-color: white;
+}
+
+/* Amélioration des listes */
+.reveal ul, .reveal ol {
+  line-height: 1.6;
+}
+
+.reveal li {
+  margin-bottom: 0.5em;
+}
+
+/* Mise en évidence */
+.reveal .fragment.fade-in-then-semi-out {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.reveal .fragment.fade-in-then-semi-out.visible {
+  opacity: 1;
+  visibility: inherit;
+}
+
+.reveal .fragment.fade-in-then-semi-out.visible.current-fragment {
+  opacity: 1;
+}
+
+.reveal .fragment.fade-in-then-semi-out.visible:not(.current-fragment) {
+  opacity: 0.4;
+}
+
+/* Personnalisation des couleurs d'accent */
+.reveal .progress {
+  color: #2E86AB;
+}
+
+.reveal .controls {
+  color: #2E86AB;
+}
+
+/* Optimisation pour les grands écrans */
+@media (min-width: 1200px) {
+  .reveal .slides section img {
+    max-width: 85%;
+  }
+}
+
+/* Styles pour les matrices de confusion */
+.confusion-matrix {
+  margin: 20px auto;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Animation douce pour les transitions */
+.reveal .slides section {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Amélioration de la sidebar si présente */
+.reveal .slide-menu-button {
+  color: #2E86AB;
+}
+
+/* Footer styling */
+.reveal .footer {
+  color: #6c757d;
+  font-size: 0.8em;
+}

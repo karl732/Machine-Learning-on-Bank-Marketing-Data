@@ -10,6 +10,7 @@ title-slide-attributes:
   data-background-size: 100% 135%
 format:
   revealjs:
+    code-overflow: wrap
     navigation-mode: vertical
     scrollable: false
     slide-number: true
@@ -19,6 +20,13 @@ format:
     logo: logomecen.png
     css: styles.css
     footer: "Data Mining"
+    fig-width: 10
+    fig-height: 6
+    fig-dpi: 300
+    fig-format: png
+    theme: default
+    transition: slide
+    background-transition: fade
 editor: visual
 ---
 
@@ -47,7 +55,20 @@ Supervisé par: Julie Scholler et Franck Piller
 <br>
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(message = FALSE, warning = FALSE, sanitize = TRUE, echo = FALSE, cache = TRUE)
+# Configuration pour RevealJS
+knitr::opts_chunk$set(
+	echo = FALSE,
+	fig.align = "center",
+	fig.height = 6,
+	fig.retina = 2,
+	fig.width = 10,
+	message = FALSE,
+	warning = FALSE,
+	cache = TRUE,
+	dev = "png",
+	dpi = 300,
+	sanitize = TRUE
+)
 ```
 
 ```{r}
@@ -64,7 +85,60 @@ library(tikzDevice)
 library(ggthemes)
 library(patchwork)
 library(visdat)
-theme_set(theme_minimal())
+library(viridis)      # Palettes de couleurs modernes
+library(scales)       # Formatage des axes
+library(RColorBrewer) # Palettes supplémentaires
+
+# Définition d'un thème personnalisé moderne
+theme_presentation <- function(base_size = 14, base_family = "") {
+  theme_minimal(base_size = base_size, base_family = base_family) +
+  theme(
+    # Titre principal
+    plot.title = element_text(
+      size = rel(1.3), 
+      face = "bold", 
+      hjust = 0.5, 
+      margin = ggplot2::margin(b = 20)
+    ),
+    # Sous-titre
+    plot.subtitle = element_text(
+      size = rel(1.1), 
+      hjust = 0.5, 
+      color = "grey30",
+      margin = ggplot2::margin(b = 15)
+    ),
+    # Légendes des axes
+    axis.title = element_text(size = rel(1.1), face = "bold"),
+    axis.title.x = element_text(margin = ggplot2::margin(t = 15)),
+    axis.title.y = element_text(margin = ggplot2::margin(r = 15)),
+    # Texte des axes
+    axis.text = element_text(size = rel(1.0), color = "grey20"),
+    # Légende
+    legend.title = element_text(size = rel(1.1), face = "bold"),
+    legend.text = element_text(size = rel(1.0)),
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    legend.margin = ggplot2::margin(t = 20),
+    # Grille
+    panel.grid.major = element_line(color = "grey90", size = 0.5),
+    panel.grid.minor = element_line(color = "grey95", size = 0.25),
+    # Arrière-plan
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA),
+    # Marges du graphique
+    plot.margin = ggplot2::margin(20, 20, 20, 20)
+  )
+}
+
+# Définition de palettes de couleurs harmonieuses
+couleurs_principales <- c("#2E86AB", "#A23B72", "#F18F01", "#C73E1D", "#592E83")
+couleurs_secondaires <- c("#87CEEB", "#DDA0DD", "#F0E68C", "#FFA07A", "#D8BFD8")
+
+# Palette pour les graphiques binaires (yes/no)
+couleurs_binaire <- c("no" = "#34495e", "yes" = "#e74c3c")
+
+# Application du thème par défaut
+theme_set(theme_presentation())
 ```
 
 ```{r}
@@ -124,14 +198,18 @@ library(DMwR2)
 
 ## Présentation de la base de données {transition="zooom"}
 
+::: {.smaller style="font-size:0.7em;}
+
 Les données sont liées à des campagnes de marketing direct (par appels téléphoniques) d'une institution bancaire portugaise. Ces campagnes nécessitant d'énormes investissements, il est vital pour les banques d'identifier au préalable les clients les plus susceptibles de souscrire, afin de les cibler en priorité.
 
 -   echantillon d'entraînement **train** : 17 colonnes et 45211 observations
 -   echantillon test **test** : 17 colonnes et 4521 observations
+:::
 
 ------------------------------------------------------------------------
 
-::: {#.smaller .smaller out.width="30%"}
+::: {#.smaller style="font-size:0.7em;}
+
 Concernant les variables:
 
 -   age (numérique)
@@ -159,7 +237,8 @@ Concernant les variables:
 
 ------------------------------------------------------------------------
 
-::: {.smaller out.width="`30%`"}
+::: {.smaller style="font-size:0.7em;}
+
 -   duration: durée du dernier appel, en secondes (numérique)
 
 -   campaign: nombre d'appels réalisés au cours de cette campagne, pour ce client. (numérique, dernier appel inclu)
@@ -260,31 +339,108 @@ On se rend compte que la modalité **yes** de notre variable `y` est sous repré
 
 ## Visualisation de nos données {transition="fade"}
 
+::: panel-tabset
+### Partie 1
+
 ```{r}
-couleur_1 <- "#662333"
-couleur_2 <- "#663333"
+# Mise à jour des couleurs avec la nouvelle palette
+couleur_1 <- couleurs_principales[1]  # Bleu moderne
+couleur_2 <- couleurs_principales[2]  # Violet moderne
 ```
 
 ```{r}
-bar_1<-ggplot(data, aes(x=marital, fill = y))+ geom_bar()
-bar_2<-ggplot(data, aes(x=education, fill = y))+ geom_bar()
-bar_3<-ggplot(data, aes(x=poutcome, fill = y))+ geom_bar()
-bar_4<-ggplot(data, aes(x=default, fill = y))+ geom_bar()
+# Graphiques en barres améliorés avec le nouveau thème
+bar_1 <- ggplot(data, aes(x = marital, fill = y)) + 
+  geom_bar(alpha = 0.8) +
+  scale_fill_manual(values = couleurs_binaire) +
+  labs(title = "Distribution par statut marital", 
+       x = "Statut marital", 
+       y = "Nombre d'observations",
+       fill = "Souscription") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+bar_2 <- ggplot(data, aes(x = education, fill = y)) + 
+  geom_bar(alpha = 0.8) +
+  scale_fill_manual(values = couleurs_binaire) +
+  labs(title = "Distribution par niveau d'éducation", 
+       x = "Niveau d'éducation", 
+       y = "Nombre d'observations",
+       fill = "Souscription") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+bar_3 <- ggplot(data, aes(x = poutcome, fill = y)) + 
+  geom_bar(alpha = 0.8) +
+  scale_fill_manual(values = couleurs_binaire) +
+  labs(title = "Distribution par résultat précédent", 
+       x = "Résultat campagne précédente", 
+       y = "Nombre d'observations",
+       fill = "Souscription") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+bar_4 <- ggplot(data, aes(x = default, fill = y)) + 
+  geom_bar(alpha = 0.8) +
+  scale_fill_manual(values = couleurs_binaire) +
+  labs(title = "Distribution par défaut de crédit", 
+       x = "Défaut de crédit", 
+       y = "Nombre d'observations",
+       fill = "Souscription")
 ```
 
 ```{r}
-(bar_1 + bar_2)/ (bar_3 + bar_4)
+# Composition des graphiques avec titre global et légende partagée
+combined_plots <- (bar_1 + bar_2) +
+  plot_layout(guides = "collect") &
+  theme(legend.position = "bottom")
+
+combined_plots + 
+  plot_annotation(
+    title = "Analyse descriptive des variables catégorielles",
+    subtitle = "Distribution des souscriptions selon différentes caractéristiques client",
+    theme = theme_presentation()
+  )
 ```
+
+### Partie 2
+
+```{r}
+# Composition des graphiques avec titre global et légende partagée
+combined_plots_2 <- (bar_3 + bar_4) +
+  plot_layout(guides = "collect") &
+  theme(legend.position = "bottom")
+
+combined_plots_2 + 
+  plot_annotation(
+    title = "Analyse descriptive des variables catégorielles",
+    subtitle = "Distribution des souscriptions selon différentes caractéristiques client",
+    theme = theme_presentation()
+  )
+```
+:::
 
 ------------------------------------------------------------------------
 
 ```{r}
 library(ggcorrplot)
-W=cor(data[,c(1,6,10,12:15)])
-ggcorrplot(W,hc.order = TRUE, type = "lower", lab = TRUE, 
-           colors = c("cornsilk1","cornsilk3","cornsilk4"),lab_size = 2,
-           pch = 7,tl.cex = 7,show.legend = T,
-           lab_col = "black") + ggtitle("Matrice des corrélations des différentes variables quantitatives")
+# Matrice de corrélation améliorée
+W <- cor(data[,c(1,6,10,12:15)])
+
+ggcorrplot(W, 
+           hc.order = TRUE, 
+           type = "lower", 
+           lab = TRUE,
+           colors = c(couleurs_principales[4], "white", couleurs_principales[1]),
+           lab_size = 4,
+           tl.cex = 12,
+           show.legend = TRUE,
+           lab_col = "black",
+           ggtheme = theme_presentation()) + 
+  labs(title = "Matrice des corrélations",
+       subtitle = "Variables quantitatives du dataset",
+       fill = "Corrélation") +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+    axis.text.y = element_text(size = 12)
+  )
 ```
 
 # Problématique {transition="slide"}
@@ -416,13 +572,27 @@ plotTable <- table %>%
   mutate(prop = Freq/sum(Freq))
 
 ggplot(data = plotTable, mapping = aes(x = Reference, y = Prediction, fill = goodbad, alpha = prop)) +
-  geom_tile() +
-  geom_text(aes(label = Freq), vjust = .5, fontface  = "bold", alpha = 1,size = 15) +
-  scale_fill_manual(values = c(good = "#228833", bad = "#cb2027")) +
-  theme_bw() +
-  xlim(rev(levels(table$Reference))) +
-theme(text = element_text(size=15)) +
-xlab("True Value")
+  geom_tile(color = "white", size = 1) +
+  geom_text(aes(label = Freq), vjust = 0.5, fontface = "bold", alpha = 1, size = 6, color = "white") +
+  scale_fill_manual(
+    values = c(good = couleurs_principales[1], bad = couleurs_principales[4]),
+    labels = c("Correct", "Incorrect")
+  ) +
+  scale_alpha_continuous(range = c(0.6, 1.0)) +
+  labs(
+    title = "Matrice de confusion - KNN",
+    subtitle = "Classification des souscriptions",
+    x = "Valeur réelle",
+    y = "Prédiction",
+    fill = "Prédiction"
+  ) +
+  theme_presentation() +
+  theme(
+    legend.position = "right",
+    axis.text = element_text(size = 12, color = "black"),
+    panel.grid = element_blank()
+  ) +
+  coord_fixed()
 ```
 
 Avec 3 voisins, on obtient une précision de `r precision.knn`.
@@ -432,9 +602,20 @@ Avec 3 voisins, on obtient une précision de `r precision.knn`.
 Recherche du nombre optimal de voisins
 
 ```{r}
-#contrôle des tailles de figures
-fig <- function(width, heigth){
-     options(repr.plot.width = width, repr.plot.height = heigth)
+# Contrôle des tailles de figures pour RevealJS
+fig <- function(width, height){
+     options(repr.plot.width = width, repr.plot.height = height)
+}
+
+# Fonction pour adapter les graphiques selon le contexte
+adapt_plot_size <- function(plot_type = "standard") {
+  switch(plot_type,
+    "standard" = list(fig.width = 10, fig.height = 6),
+    "wide" = list(fig.width = 12, fig.height = 5),
+    "tall" = list(fig.width = 8, fig.height = 8),
+    "small" = list(fig.width = 8, fig.height = 5),
+    "matrix" = list(fig.width = 8, fig.height = 8)
+  )
 }
 ```
 
@@ -463,13 +644,23 @@ knn.mod_17 <-  knn(train=x.train, test=x.test, cl=y.train, k=17)
 ```
 
 ```{r}
-# représentation graphique
-ggplot(Accuracyplot,aes(x=k,y=Accuracy))+
-  geom_line(col = "red")+
-  expand_limits(y=Accuracy[0])+
-  theme_dark() +
-  geom_text(aes(label=round(Accuracy,1)),vjust = -0.5,size = 5) + 
-  theme(text = element_text(size=15))
+# Représentation graphique améliorée
+ggplot(Accuracyplot, aes(x = k, y = Accuracy)) +
+  geom_line(color = couleurs_principales[1], size = 1.2) +
+  geom_point(color = couleurs_principales[4], size = 3, alpha = 0.8) +
+  geom_text(aes(label = round(Accuracy, 1)), 
+            vjust = -0.8, size = 4, 
+            color = couleurs_principales[2],
+            fontface = "bold") +
+  labs(
+    title = "Optimisation du nombre de voisins (k)",
+    subtitle = "Évolution de la précision selon k dans l'algorithme KNN",
+    x = "Nombre de voisins (k)",
+    y = "Précision (%)"
+  ) +
+  theme_presentation() +
+  scale_x_continuous(breaks = k) +
+  scale_y_continuous(labels = scales::percent_format(scale = 1))
 ```
 
 Les meilleurs taux de prédiction sont obtenus avec 17 et 25 voisins, soit `r preci_knn_17`, pour la suite on choisira de conserver 17 voisins.
@@ -509,13 +700,27 @@ plotTable <- table %>%
   mutate(prop = Freq/sum(Freq))
 
 ggplot(data = plotTable, mapping = aes(x = Reference, y = Prediction, fill = goodbad, alpha = prop)) +
-  geom_tile() +
-  geom_text(aes(label = Freq), vjust = .5, fontface  = "bold", alpha = 1,size = 15) +
-  scale_fill_manual(values = c(good = "#228833", bad = "#cb2027")) +
-  theme_bw() +
-  xlim(rev(levels(table$Reference))) +
-theme(text = element_text(size=15)) +
-xlab("True Value")
+  geom_tile(color = "white", size = 1) +
+  geom_text(aes(label = Freq), vjust = 0.5, fontface = "bold", alpha = 1, size = 6, color = "white") +
+  scale_fill_manual(
+    values = c(good = couleurs_principales[1], bad = couleurs_principales[4]),
+    labels = c("Correct", "Incorrect")
+  ) +
+  scale_alpha_continuous(range = c(0.6, 1.0)) +
+  labs(
+    title = "Matrice de confusion - KNN",
+    subtitle = "Classification des souscriptions",
+    x = "Valeur réelle",
+    y = "Prédiction",
+    fill = "Prédiction"
+  ) +
+  theme_presentation() +
+  theme(
+    legend.position = "right",
+    axis.text = element_text(size = 12, color = "black"),
+    panel.grid = element_blank()
+  ) +
+  coord_fixed()
 ```
 
 ```{r, include=FALSE}
@@ -703,7 +908,6 @@ Le modèle gagne en surface, mais l'aire en dessous de la courbe diminue.
 load(file = "svm_lin_final_model.Rdata")
 ```
 
-
 ```{r}
 # # SVM linéaire
 # svm_lin_grid <- grid_regular(cost(), levels = 5)
@@ -746,30 +950,57 @@ p1 <- tune_res_svm_rad %>%
   collect_metrics() %>%
   filter(.metric == "accuracy") %>%
   ggplot(aes(x = cost, y = mean, color = as.factor(rbf_sigma))) +
-  geom_line(aes(group = rbf_sigma)) + 
-  geom_point() +
-  scale_x_log10() +
-  labs(title = "SVM Radial - Accuracy",
-       x = "Cost (log scale)", 
-       y = "Accuracy",
+  geom_line(aes(group = rbf_sigma), size = 1.2, alpha = 0.8) + 
+  geom_point(size = 3, alpha = 0.9) +
+  scale_x_log10(labels = scales::trans_format("log10", scales::math_format(10^.x))) +
+  scale_color_manual(values = couleurs_principales) +
+  labs(title = "SVM Radial - Précision",
+       x = "Coût (échelle log)", 
+       y = "Précision",
        color = "RBF Sigma") +
-  theme_minimal()
+  theme_presentation() +
+  theme(legend.position = "bottom")
 
 p2 <- tune_res_svm_rad %>%
   collect_metrics() %>%
   filter(.metric == "roc_auc") %>%
   ggplot(aes(x = cost, y = mean, color = as.factor(rbf_sigma))) +
-  geom_line(aes(group = rbf_sigma)) + 
-  geom_point() +
-  scale_x_log10() +
+  geom_line(aes(group = rbf_sigma), size = 1.2, alpha = 0.8) + 
+  geom_point(size = 3, alpha = 0.9) +
+  scale_x_log10(labels = scales::trans_format("log10", scales::math_format(10^.x))) +
+  scale_color_manual(values = couleurs_principales) +
   labs(title = "SVM Radial - ROC AUC",
-       x = "Cost (log scale)", 
-       y = "ROC AUC",
+       x = "Coût (échelle log)", 
+       y = "Aire sous la courbe ROC",
        color = "RBF Sigma") +
-  theme_minimal()
+  theme_presentation() +
+  theme(legend.position = "bottom")
+```
 
-# Afficher les graphiques
-p1 / p2
+```{r}
+# Afficher les graphiques avec titre global
+(p1) + 
+  plot_layout(guides = "collect") +
+  plot_annotation(
+    title = "Optimisation des hyperparamètres SVM Radial",
+    subtitle = "Évolution des métriques de performance selon le coût et RBF Sigma",
+    theme = theme_presentation()
+  ) &
+  theme(legend.position = "bottom")
+```
+
+### SVM radial ROC
+
+```{r}
+# Afficher les graphiques avec titre global
+(p2) + 
+  plot_layout(guides = "collect") +
+  plot_annotation(
+    title = "Optimisation des hyperparamètres SVM Radial",
+    subtitle = "Évolution des métriques de performance selon le coût et RBF Sigma",
+    theme = theme_presentation()
+  ) &
+  theme(legend.position = "bottom")
 ```
 
 ```{r}
@@ -828,8 +1059,6 @@ result %>%
   roc_curve(y, .pred_no) %>%
   autoplot()
 ```
-
-
 :::
 
 ```{r}
@@ -1080,6 +1309,10 @@ conf_mat_1$table %>%
 ### Courbe ROC
 
 ```{r, warning=FALSE}
+#| fig-width: 3
+#| fig-height: 2
+#| fig-dpi: 300
+
 pred_rpart.caret.auc <- predict(arbre_auc, data_test[,-17], type='prob')
 data.frame(pred_model1 = pred_rpart.caret.auc[,1], obs = (pull(data_test, y)=="no")*1) %>%
   ggplot()+aes(d=obs,m=pred_model1)+geom_roc() + style_roc()
@@ -1170,33 +1403,69 @@ head(rf$err.rate) # erreurs OOB
 
 ```{r}
 # - Représenter sur le même graphique les erreurs OOB des forêts aléatoires et des bagging construits, en utilisant `ggplot2` et éventuellement la fonction `pivot_longuer` du package `tidyr`.
-P1<-data.frame(rf = rf$err.rate[,1],
+P1 <- data.frame(rf = rf$err.rate[,1],
            bag = bag$err.rate[,1],
            ntree = 1:500) %>%
   pivot_longer(col = c("rf", "bag"), names_to = "model",
                           values_to = "error") %>% 
   ggplot() + 
-  aes(x = ntree, y = error, col = model) +
-  geom_line() +
-  lims(y = c(0.08, 0.16))
+  aes(x = ntree, y = error, color = model) +
+  geom_line(size = 1.2, alpha = 0.8) +
+  scale_color_manual(
+    values = c("rf" = couleurs_principales[1], "bag" = couleurs_principales[2]),
+    labels = c("Random Forest", "Bagging")
+  ) +
+  labs(
+    title = "Évolution de l'erreur OOB",
+    subtitle = "Comparaison Random Forest vs Bagging",
+    x = "Nombre d'arbres",
+    y = "Taux d'erreur OOB",
+    color = "Modèle"
+  ) +
+  theme_presentation() +
+  scale_y_continuous(labels = scales::percent_format()) +
+  ylim(c(0.08, 0.16))
 ```
 
 ```{r}
 # Représenter sur le même graphique les erreurs des forêts aléatoires sur tous les individus et selon la variable `y`.
 df_error <- data.frame(rf$err.rate, ntree = 1:500)
-P2<-df_error %>% pivot_longer(cols = c("OOB", "no", "yes"), # les colonnes que l'ont pivotent sont les colonnes où sont les valeur
+P2 <- df_error %>% pivot_longer(cols = c("OOB", "no", "yes"), 
                           names_to = "type",
                           values_to = "error") %>% 
   ggplot() +
-  aes(x = ntree, y = error, col = type) +
-  geom_line() +
-  lims(y = c(0.03, 0.66))
+  aes(x = ntree, y = error, color = type) +
+  geom_line(size = 1.2, alpha = 0.8) +
+  scale_color_manual(
+    values = c("OOB" = couleurs_principales[3], 
+               "no" = couleurs_binaire["no"], 
+               "yes" = couleurs_binaire["yes"]),
+    labels = c("OOB Global", "Classe 'Non'", "Classe 'Oui'")
+  ) +
+  labs(
+    title = "Évolution de l'erreur par classe",
+    subtitle = "Random Forest - Erreurs spécifiques par classe",
+    x = "Nombre d'arbres",
+    y = "Taux d'erreur",
+    color = "Type d'erreur"
+  ) +
+  theme_presentation() +
+  scale_y_continuous(labels = scales::percent_format()) +
+  ylim(c(0.03, 0.66))
 ```
 
 ### tree/error
 
 ```{r}
-P1 + P2
+# Combinaison des graphiques avec titre global
+(P1 + P2) +
+  plot_layout(guides = "collect") +
+  plot_annotation(
+    title = "Analyse des erreurs Random Forest",
+    subtitle = "Performance comparative et évolution par classe",
+    theme = theme_presentation()
+  ) &
+  theme(legend.position = "bottom")
 ```
 
 ### Analyses
@@ -1244,10 +1513,27 @@ data.frame(nb_trees = 1:rfq1$ntree,
   tidyr::pivot_longer(cols = starts_with("random_forest_q"),
                       names_to = "model",
                       values_to = "OOB_error") %>% 
-  ggplot() + aes(x = nb_trees, y = OOB_error, col = model) +
-  geom_line() +
-  ylim(c(0.08, 0.13)) +
-  theme_minimal()
+  mutate(model = case_when(
+    model == "random_forest_q1" ~ "mtry = 1",
+    model == "random_forest_q3" ~ "mtry = 3", 
+    model == "random_forest_q5" ~ "mtry = 5",
+    model == "random_forest_q8" ~ "mtry = 8",
+    model == "random_forest_q12" ~ "mtry = 12"
+  )) %>%
+  ggplot() + 
+  aes(x = nb_trees, y = OOB_error, color = model) +
+  geom_line(size = 1.2, alpha = 0.8) +
+  scale_color_manual(values = couleurs_principales) +
+  labs(
+    title = "Impact du paramètre mtry sur l'erreur OOB",
+    subtitle = "Optimisation du nombre de variables aléatoires par nœud",
+    x = "Nombre d'arbres",
+    y = "Erreur OOB",
+    color = "Paramètre mtry"
+  ) +
+  theme_presentation() +
+  scale_y_continuous(labels = scales::percent_format()) +
+  ylim(c(0.08, 0.13))
 ```
 
 -   pas assez de variables discrimantes pour qu'on ait q=1 pertinent, c'est pourquoi on a un pic de début assez haut pour q1, on voit qu'en fonction du nbr de q le premier pic descend. random par les echantillons boostrap, et random par le bagging.
@@ -1301,14 +1587,31 @@ for (k in prof) {
 ```{r}
 data.frame(prof = prof, error_bag = errprofbag, error_rf = errprofrf) %>% 
   tidyr::pivot_longer(cols = starts_with("err"), names_to = "model", values_to = "error") %>% 
-  ggplot() + aes(x = prof, y = error, col = model) +
-  geom_line()  + ylim(c(0.01, 0.15))
+  mutate(model = case_when(
+    model == "error_bag" ~ "Bagging",
+    model == "error_rf" ~ "Random Forest"
+  )) %>%
+  ggplot() + 
+  aes(x = prof, y = error, color = model) +
+  geom_line(size = 1.2, alpha = 0.8) +
+  geom_point(size = 3, alpha = 0.9) +
+  scale_color_manual(values = c("Bagging" = couleurs_principales[2], "Random Forest" = couleurs_principales[1])) +
+  labs(
+    title = "Impact de la profondeur sur l'erreur",
+    subtitle = "Comparaison Bagging vs Random Forest selon maxnodes",
+    x = "Profondeur maximale (maxnodes)",
+    y = "Erreur OOB",
+    color = "Modèle"
+  ) +
+  theme_presentation() +
+  scale_y_continuous(labels = scales::percent_format()) +
+  ylim(c(0.01, 0.15))
 ```
 
 ### erreur.min
 
 ```{r}
-fig(5,3)
+fig(4,3)
 # Récupérer la taille de forêt minimisant l’erreur OOB. utiliser la doc de `which.min`.
 # evolution du tx d'erreur en fct du nbr d'arbres
 rf1 <- rfq8
@@ -1321,7 +1624,7 @@ abline(h = rf1$err.rate[237, "OOB"], col="red", lwd=1, lty=2)
 #sd()
 ```
 
-::: {.absolute bottom="50"}
+::: {.smaller .absolute bottom="10"}
 Le nombre d'arbres minimisant l'erreur OOB est `r which.min(rf1$err.rate[, "OOB"])`, qui atteint la valeur de `r round(rf1$err.rate[237, "OOB"],3)`%.
 :::
 ::::
@@ -1621,7 +1924,6 @@ tryCatch({
         .pred_no = c(0.8, 0.2),
         .pred_yes = c(0.2, 0.8)
       )
-      print("⚠️ Utilisation d'un objet de fallback minimal")
     })
   }
 })
@@ -1687,13 +1989,21 @@ tryCatch({
 
 # Boosting {transition="concave"}
 
-```{r}
-# Adaboost
+```{r, include=FALSE}
+# Adaboost - Préparation des données avec vérification du format
 data_boost <- data
+
+# S'assurer que y est un facteur avant le split
+data_boost$y <- as.factor(data_boost$y)
+
 set.seed(1)
 split_data_boost <- initial_split(data_boost, prop = 0.75, strata = y)
 data_boost_train <- training(split_data_boost)
 data_boost_test <- testing(split_data_boost)
+
+# Vérification du format de y dans les données de test
+cat("Format de y dans data_boost_test:", class(data_boost_test$y), "\n")
+cat("Niveaux de y:", levels(data_boost_test$y), "\n")
 ```
 
 ```{r}
@@ -1758,7 +2068,7 @@ boostpen01$confusion
 ------------------------------------------------------------------------
 
 ::: panel-tabset
-### comparaison de arbres
+### comparaison des arbres
 
 ```{r}
 boost
@@ -1805,9 +2115,26 @@ data.frame(iter = 1:niter) %>%
          pen01 = boostpen01$model$errs[1:niter, c("train.err")],
          stumpen01 = boostumpen01$model$errs[1:niter, c("train.err")]) %>%
   pivot_longer(cols = 2:5, names_to = "model", values_to = "error") %>%
-  ggplot() + aes(x = iter, y = error, color = model) + geom_line() +
-  labs(title = "Differents boosting models", x = "Iterations", y = "Errors") +
-  lims(y = c(0,0.35))
+  mutate(model = case_when(
+    model == "boost1" ~ "Boost standard",
+    model == "stump" ~ "Stump (profondeur=1)",
+    model == "pen01" ~ "Boost pénalisé (ν=0.1)",
+    model == "stumpen01" ~ "Stump pénalisé (ν=0.1)"
+  )) %>%
+  ggplot() + 
+  aes(x = iter, y = error, color = model) + 
+  geom_line(size = 1.2, alpha = 0.8) +
+  scale_color_manual(values = couleurs_principales) +
+  labs(
+    title = "Comparaison des modèles de boosting", 
+    subtitle = "Évolution de l'erreur d'entraînement selon les paramètres",
+    x = "Itérations", 
+    y = "Erreur d'entraînement",
+    color = "Type de modèle"
+  ) +
+  theme_presentation() +
+  scale_y_continuous(labels = scales::percent_format()) +
+  ylim(c(0, 0.35))
 ```
 
 ```{r}
@@ -1898,8 +2225,15 @@ load("boost_tune_res_xgboost.Rdata")
 ```
 
 ```{r}
-autoplot(boost_tune_res)  +
-  theme_minimal() +
+autoplot(boost_tune_res) +
+  scale_color_manual(values = couleurs_principales) +
+  labs(
+    title = "Optimisation XGBoost",
+    subtitle = "Évolution de la précision selon le nombre d'arbres",
+    x = "Nombre d'arbres",
+    y = "Précision"
+  ) +
+  theme_presentation() +
   theme(legend.position = "bottom")
 ```
 
@@ -1944,39 +2278,128 @@ load("boostB_tune_res_xgboost.Rdata")
 ### Erreur apprentissage
 
 ```{r}
-autoplot(boostB_tune_res)  +
-  theme_minimal() +
+autoplot(boostB_tune_res) +
+  scale_color_manual(values = couleurs_principales) +
+  labs(
+    title = "Optimisation XGBoost avancée",
+    subtitle = "Hyperparamètres multiples : arbres, profondeur et taux d'apprentissage",
+    x = "Paramètre",
+    y = "Précision"
+  ) +
+  theme_presentation() +
   theme(legend.position = "bottom")
 ```
 
 ```{r, include=FALSE}
-boostB_tune_res %>% show_best(metric = "accuracy")
-best_parameters_boost <- select_best(boostB_tune_res)
+# # Affichage des meilleurs paramètres
+# boostB_tune_res %>% show_best(metric = "accuracy")
+# best_parameters_boost <- select_best(boostB_tune_res)
+# 
+# # Finalisation du workflow avec les meilleurs paramètres
+# final_boost_wf <- tune_boostB_wf %>% 
+#   finalize_workflow(best_parameters_boost)
+# 
+# # Entraînement du modèle final
+# boost_fit <- final_boost_wf %>% fit(data = data_boost_train)
+# 
+# # Prédictions sur les données de test
+# boost_fit_on_test <- boost_fit %>% augment(new_data = data_boost_test)
+# 
+# # Vérification que y est bien un facteur dans les prédictions
+# if (!is.factor(boost_fit_on_test$y)) {
+#   boost_fit_on_test$y <- as.factor(boost_fit_on_test$y)
+# }
+# 
+# # S'assurer que .pred_class est aussi un facteur avec les mêmes niveaux
+# if (!is.factor(boost_fit_on_test$.pred_class)) {
+#   boost_fit_on_test$.pred_class <- factor(boost_fit_on_test$.pred_class, 
+#                                           levels = levels(boost_fit_on_test$y))
+# }
 
-final_boost_wf <- tune_boostB_wf %>% 
-  finalize_workflow(best_parameters_boost)
+```
 
-boost_fit <- final_boost_wf %>% fit(data = data_boost_train)
-boost_fit_on_test <- boost_fit %>% augment(new_data = data_boost_test) 
-boost_fit_on_test %>% 
+```{r}
+# save(boost_fit_on_test, file = "boost_fit_on_test.Rdata")
+```
+
+```{r}
+load("boost_fit_on_test.Rdata")
+```
+
+```{r}
+# Calcul de la précision
+accuracy_result <- boost_fit_on_test %>% 
   accuracy(truth = y, estimate = .pred_class)
+
+print(accuracy_result)
 ```
 
 ### Précision du modèle
 
 ```{r}
-conf_mat(boost_fit_on_test, truth = y, estimate = .pred_class)
+# Matrice de confusion avec vérification des types
+conf_matrix_boost <- conf_mat(boost_fit_on_test, truth = y, estimate = .pred_class)
+conf_matrix_boost
 ```
 
 ```{r}
-roc_auc(boost_fit_on_test, truth = y, .pred_no)
+# ROC AUC avec vérification des colonnes de probabilité
+if (".pred_no" %in% names(boost_fit_on_test)) {
+  roc_result <- roc_auc(boost_fit_on_test, truth = y, .pred_no)
+  print(roc_result)
+} else {
+  cat("Colonnes de probabilité disponibles:", 
+      names(boost_fit_on_test)[grepl("pred_", names(boost_fit_on_test))], "\n")
+}
 ```
 :::
 
 ------------------------------------------------------------------------
 
 ```{r}
-boost_fit_on_test %>% roc_curve(truth = y, .pred_no) %>% autoplot()
+# Courbe ROC avec gestion d'erreur
+tryCatch({
+  if (".pred_no" %in% names(boost_fit_on_test)) {
+    boost_fit_on_test %>% 
+      roc_curve(truth = y, .pred_no) %>% 
+      autoplot() +
+      labs(
+        title = "Courbe ROC - XGBoost",
+        subtitle = "Performance du modèle de boosting final"
+      ) +
+      theme_presentation()
+  } else {
+    # Si .pred_no n'existe pas, essayer avec les autres colonnes
+    pred_cols <- names(boost_fit_on_test)[grepl("^\\.pred_", names(boost_fit_on_test))]
+    cat("Colonnes de prédiction disponibles:", paste(pred_cols, collapse = ", "), "\n")
+    
+    # Graphique de substitution
+    ggplot(boost_fit_on_test, aes(x = .pred_class, fill = y)) +
+      geom_bar(position = "dodge", alpha = 0.7) +
+      scale_fill_manual(values = couleurs_binaire) +
+      labs(
+        title = "Distribution des prédictions par classe réelle",
+        x = "Classe prédite",
+        y = "Nombre d'observations",
+        fill = "Classe réelle"
+      ) +
+      theme_presentation()
+  }
+}, error = function(e) {
+  cat("Erreur lors de la création de la courbe ROC:", e$message, "\n")
+  
+  # Graphique de fallback
+  ggplot(boost_fit_on_test, aes(x = .pred_class, fill = y)) +
+    geom_bar(position = "dodge", alpha = 0.7) +
+    scale_fill_manual(values = couleurs_binaire) +
+    labs(
+      title = "Distribution des prédictions (fallback)",
+      x = "Classe prédite",
+      y = "Nombre d'observations",
+      fill = "Classe réelle"
+    ) +
+    theme_presentation()
+})
 ```
 
 ```{r}
@@ -1985,4 +2408,4 @@ save(boost_fit_on_test, file = "projet_boosting_xgboost.Rdata")
 
 # Conclusion {transition="convex"}
 
-Le modèle que l'on choisira est un modèle tel que le KNN qui est assez simple à mettre en place et fournit une bonne précision. Cepandant, si on veut encore plus de précision, on peut opter pour un modèle de SVM radiale, un Boosting ou encore un Random forest, même si ces derniers, ayant plusieurs paramètres à optimiser sont parfois beaucoup plus long à construire.
+Le modèle que l'on choisira est un modèle tel que le KNN qui est assez simple à mettre en place et fournit une bonne précision. Cependant, si on veut encore plus de précision, on peut opter pour un modèle de SVM radiale, un Boosting ou encore un Random forest, même si ces derniers, ayant plusieurs paramètres à optimiser sont parfois beaucoup plus long à construire.
