@@ -2,7 +2,6 @@
 
 [![Quarto](https://img.shields.io/badge/Made%20with-Quarto-blue.svg)](https://quarto.org/)
 [![R](https://img.shields.io/badge/R-%23276DC3.svg?style=flat&logo=r&logoColor=white)](https://www.r-project.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## 📋 Description
 
@@ -84,6 +83,9 @@ quarto render "Quarto Bank Marketing Pierre et Karl.qmd"
 
 # Ou dans RStudio
 # Cliquer sur "Render" ou Ctrl+Shift+K
+
+# Ou pour voir le quarto
+# Cliquer sr le fichier html "Quarto Bank Marketing Pierre et Karl.html"
 ```
 
 ## 📈 Résultats principaux
@@ -98,10 +100,9 @@ quarto render "Quarto Bank Marketing Pierre et Karl.qmd"
 - **Design moderne** avec thème personnalisé
 - **Graphiques interactifs** optimisés pour RevealJS
 - **Navigation par onglets** pour l'organisation du contenu
-- **Palettes de couleurs** harmonieuses et professionnelles
-- **Responsive design** adapté à tous les écrans
 
-## 🔧 Dépannage
+
+## 🔧 Debug
 
 Consultez le fichier [README_Troubleshooting.md](README_Troubleshooting.md) pour les problèmes courants :
 - Conflits de packages (`margin()`)
@@ -123,10 +124,9 @@ Les contributions sont les bienvenues ! N'hésitez pas à :
 
 ## 📞 Contact
 
-- **Pierre Jean** - [email]
-- **Karl Sondeji** - [email]
+- **Karl Sondeji** - [karl.sondeji@gmail.com]
 
-**Université de Tours** - M1 Économie de l'entreprise
+**Université de Tours** - Master Économiste d'entreprise
 
 ---
 
