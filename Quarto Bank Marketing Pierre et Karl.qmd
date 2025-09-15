@@ -198,58 +198,50 @@ library(DMwR2)
 
 ## Présentation de la base de données {transition="zooom"}
 
-::: {.smaller style="font-size:0.7em;}
+::: {.smaller style="font-size:0.8em;"}
+**Contexte :** Campagnes de marketing direct bancaire portugais
 
-Les données sont liées à des campagnes de marketing direct (par appels téléphoniques) d'une institution bancaire portugaise. Ces campagnes nécessitant d'énormes investissements, il est vital pour les banques d'identifier au préalable les clients les plus susceptibles de souscrire, afin de les cibler en priorité.
-
--   echantillon d'entraînement **train** : 17 colonnes et 45211 observations
--   echantillon test **test** : 17 colonnes et 4521 observations
+- **Train :** 45 211 observations, 17 variables
+- **Test :** 4 521 observations, 17 variables
+- **Objectif :** Prédire la souscription à un dépôt à terme (`y`)
 :::
 
-------------------------------------------------------------------------
+## Les variables
 
-::: {#.smaller style="font-size:0.7em;}
+::: panel-tabset
+### Variables démographiques
 
-Concernant les variables:
-
--   age (numérique)
-
--   job : type d'emploi (catégorielle: `admin.`,`unknown`,`unemployed`,`management`,`housemaid`,`entrepreneur`,`student`, `blue-collar`,`self-employed`,`retired`,`technician`,`services`)
-
--   marital : marital status (catégorielle: `married`,`divorced`,`single`; à noter: `divorced` signifie divorcé ou veuf)
-
--   education (catégorielle: `unknown`,`secondary`,`primary`,`tertiary`)
-
--   default: la personne est elle en défaut de crédit? (binaire: `yes`,`no`)
-
--   balance: moyenne de l'équilibre annuel, en euros (numérique)
-
--   housing: la personne a-t-elle un crédit immobilier? (binaire: `yes`,`no`)
-
--   loan: la personne a-t-elle un emprunt? (binaire: `yes`,`no`)
-
--   contact: manière dont la personne a été contactée (catégorielle: `unknown`,`telephone`,`cellular`)
-
--   day: dernier jour contacté dans le mois (numérique)
-
--   month: dernier mois contacté au cours de l'année (catégorielle: `jan`, `feb`, `mar`, ..., `nov`, `dec`)
+::: {.smaller style="font-size:0.75em;"}
+- **age** : Âge (numérique)
+- **job** : Emploi (12 catégories : admin, management, technician, etc.)
+- **marital** : Statut marital (married, divorced, single)
+- **education** : Niveau d'éducation (primary, secondary, tertiary, unknown)
+- **default** : Défaut de crédit (yes/no)
+- **balance** : Équilibre annuel moyen en € (numérique)
 :::
 
-------------------------------------------------------------------------
+### Variables bancaires
 
-::: {.smaller style="font-size:0.7em;}
+::: {.smaller style="font-size:0.75em;"}
+- **housing** : Crédit immobilier (yes/no)
+- **loan** : Emprunt personnel (yes/no)
+- **contact** : Mode de contact (cellular, telephone, unknown)
+- **day** : Jour du dernier contact (numérique)
+- **month** : Mois du dernier contact (jan-dec)
+- **duration** : Durée du dernier appel en sec. (numérique)
+:::
 
--   duration: durée du dernier appel, en secondes (numérique)
+### Variables campagne
 
--   campaign: nombre d'appels réalisés au cours de cette campagne, pour ce client. (numérique, dernier appel inclu)
+::: {.smaller style="font-size:0.75em;"}
+- **campaign** : Nb d'appels cette campagne (numérique)
+- **pdays** : Jours depuis dernier contact campagne précédente (-1 = jamais contacté)
+- **previous** : Nb d'appels campagne précédente (numérique)
+- **poutcome** : Résultat campagne précédente (success, failure, other, unknown)
 
--   pdays: nombre de jours qui se sont écoulés depuis que le client a été contacté pour la dernière fois lors d'une campagne précédente (numérique, -1 signifie que le client n'a pas été préalablement contacté)
-
--   previous: nombre d'appels réalisés avant cette campagne pour ce client (numérique)
-
--   poutcome: résultat de la campagne marketing précédente (catégorielle: `unknown`,`other`,`failure`,`success`)
-
-variable endogène (cible désirée): - y : le client a souscrit à un dépôt à terme? (binaire: `yes`,`no`)
+**Variable cible :**
+- **y** : Souscription dépôt à terme (**yes/no**)
+:::
 :::
 
 ## Importation des données {.smaller transition="concave"}
@@ -304,14 +296,16 @@ data <- data %>%
 
 ## Restructuration de notre base de données {.smaller transition="zooom"}
 
-``` r
-# Transformations des variables catégorielles jusqu'à lors considérées comme des caractères en facteurs
-data$marital <- factor(data$marital, levels = c('single', 'divorced', 'married'))
-data$education <- factor(data$education, levels = c('unknown', 'primary', 'secondary', 'tertiary'))
+```r
+# Conversion en facteurs avec niveaux ordonnés
+data$marital <- factor(data$marital, 
+                      levels = c('single', 'divorced', 'married'))
+data$education <- factor(data$education, 
+                        levels = c('unknown', 'primary', 'secondary', 'tertiary'))
 ```
 
-``` r
-# on recode les variables de la base 
+```r
+# Recodage des variables (suppression "unknown" et conversion binaire)
 data$job <- fct_recode(data$job, NULL = "unknown")
 data$education <- fct_recode(data$education, NULL = "unknown")
 data$default <- recode_factor(data$default, "yes" = "1", "no" = "0")

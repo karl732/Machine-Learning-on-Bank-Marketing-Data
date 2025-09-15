@@ -257,44 +257,56 @@ Pierre Jean &amp; Karl Sondeji
 </section>
 <section id="présentation-de-la-base-de-données-1" class="slide level2" data-transition="zooom">
 <h2>Présentation de la base de données</h2>
-<div class="smaller" style="&quot;font-size:0.7em;">
-<p>Les données sont liées à des campagnes de marketing direct (par appels téléphoniques) d’une institution bancaire portugaise. Ces campagnes nécessitant d’énormes investissements, il est vital pour les banques d’identifier au préalable les clients les plus susceptibles de souscrire, afin de les cibler en priorité.</p>
+<div class="smaller" style="font-size:0.8em;">
+<p><strong>Contexte :</strong> Campagnes de marketing direct bancaire portugais</p>
 <ul>
-<li>echantillon d’entraînement <strong>train</strong> : 17 colonnes et 45211 observations</li>
-<li>echantillon test <strong>test</strong> : 17 colonnes et 4521 observations</li>
+<li><strong>Train :</strong> 45 211 observations, 17 variables</li>
+<li><strong>Test :</strong> 4 521 observations, 17 variables</li>
+<li><strong>Objectif :</strong> Prédire la souscription à un dépôt à terme (<code>y</code>)</li>
 </ul>
 </div>
 </section>
-<section class="slide level2">
-
-<div id=".smaller" style="&quot;font-size:0.7em;">
-<p>Concernant les variables:</p>
+<section id="les-variables" class="slide level2">
+<h2>Les variables</h2>
+<div class="panel-tabset">
+<ul id="tabset-1" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-1-1">Variables démographiques</a></li><li><a href="#tabset-1-2">Variables bancaires</a></li><li><a href="#tabset-1-3">Variables campagne</a></li></ul>
+<div class="tab-content">
+<div id="tabset-1-1">
+<div class="smaller" style="font-size:0.75em;">
 <ul>
-<li><p>age (numérique)</p></li>
-<li><p>job : type d’emploi (catégorielle: <code>admin.</code>,<code>unknown</code>,<code>unemployed</code>,<code>management</code>,<code>housemaid</code>,<code>entrepreneur</code>,<code>student</code>, <code>blue-collar</code>,<code>self-employed</code>,<code>retired</code>,<code>technician</code>,<code>services</code>)</p></li>
-<li><p>marital : marital status (catégorielle: <code>married</code>,<code>divorced</code>,<code>single</code>; à noter: <code>divorced</code> signifie divorcé ou veuf)</p></li>
-<li><p>education (catégorielle: <code>unknown</code>,<code>secondary</code>,<code>primary</code>,<code>tertiary</code>)</p></li>
-<li><p>default: la personne est elle en défaut de crédit? (binaire: <code>yes</code>,<code>no</code>)</p></li>
-<li><p>balance: moyenne de l’équilibre annuel, en euros (numérique)</p></li>
-<li><p>housing: la personne a-t-elle un crédit immobilier? (binaire: <code>yes</code>,<code>no</code>)</p></li>
-<li><p>loan: la personne a-t-elle un emprunt? (binaire: <code>yes</code>,<code>no</code>)</p></li>
-<li><p>contact: manière dont la personne a été contactée (catégorielle: <code>unknown</code>,<code>telephone</code>,<code>cellular</code>)</p></li>
-<li><p>day: dernier jour contacté dans le mois (numérique)</p></li>
-<li><p>month: dernier mois contacté au cours de l’année (catégorielle: <code>jan</code>, <code>feb</code>, <code>mar</code>, …, <code>nov</code>, <code>dec</code>)</p></li>
+<li><strong>age</strong> : Âge (numérique)</li>
+<li><strong>job</strong> : Emploi (12 catégories : admin, management, technician, etc.)</li>
+<li><strong>marital</strong> : Statut marital (married, divorced, single)</li>
+<li><strong>education</strong> : Niveau d’éducation (primary, secondary, tertiary, unknown)</li>
+<li><strong>default</strong> : Défaut de crédit (yes/no)</li>
+<li><strong>balance</strong> : Équilibre annuel moyen en € (numérique)</li>
 </ul>
 </div>
-</section>
-<section class="slide level2">
-
-<div class="smaller" style="&quot;font-size:0.7em;">
+</div>
+<div id="tabset-1-2">
+<div class="smaller" style="font-size:0.75em;">
 <ul>
-<li><p>duration: durée du dernier appel, en secondes (numérique)</p></li>
-<li><p>campaign: nombre d’appels réalisés au cours de cette campagne, pour ce client. (numérique, dernier appel inclu)</p></li>
-<li><p>pdays: nombre de jours qui se sont écoulés depuis que le client a été contacté pour la dernière fois lors d’une campagne précédente (numérique, -1 signifie que le client n’a pas été préalablement contacté)</p></li>
-<li><p>previous: nombre d’appels réalisés avant cette campagne pour ce client (numérique)</p></li>
-<li><p>poutcome: résultat de la campagne marketing précédente (catégorielle: <code>unknown</code>,<code>other</code>,<code>failure</code>,<code>success</code>)</p></li>
+<li><strong>housing</strong> : Crédit immobilier (yes/no)</li>
+<li><strong>loan</strong> : Emprunt personnel (yes/no)</li>
+<li><strong>contact</strong> : Mode de contact (cellular, telephone, unknown)</li>
+<li><strong>day</strong> : Jour du dernier contact (numérique)</li>
+<li><strong>month</strong> : Mois du dernier contact (jan-dec)</li>
+<li><strong>duration</strong> : Durée du dernier appel en sec.&nbsp;(numérique)</li>
 </ul>
-<p>variable endogène (cible désirée): - y : le client a souscrit à un dépôt à terme? (binaire: <code>yes</code>,<code>no</code>)</p>
+</div>
+</div>
+<div id="tabset-1-3">
+<div class="smaller" style="font-size:0.75em;">
+<ul>
+<li><strong>campaign</strong> : Nb d’appels cette campagne (numérique)</li>
+<li><strong>pdays</strong> : Jours depuis dernier contact campagne précédente (-1 = jamais contacté)</li>
+<li><strong>previous</strong> : Nb d’appels campagne précédente (numérique)</li>
+<li><strong>poutcome</strong> : Résultat campagne précédente (success, failure, other, unknown)</li>
+</ul>
+<p><strong>Variable cible :</strong> - <strong>y</strong> : Souscription dépôt à terme (<strong>yes/no</strong>)</p>
+</div>
+</div>
+</div>
 </div>
 </section>
 <section id="importation-des-données" class="slide level2 smaller" data-transition="concave">
@@ -335,10 +347,12 @@ Pierre Jean &amp; Karl Sondeji
 </section>
 <section id="restructuration-de-notre-base-de-données" class="slide level2 smaller" data-transition="zooom">
 <h2>Restructuration de notre base de données</h2>
-<div class="sourceCode" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="co"># Transformations des variables catégorielles jusqu'à lors considérées comme des caractères en facteurs</span></span>
-<span id="cb5-2"><a href=""></a>data<span class="sc">$</span>marital <span class="ot">&lt;-</span> <span class="fu">factor</span>(data<span class="sc">$</span>marital, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">'single'</span>, <span class="st">'divorced'</span>, <span class="st">'married'</span>))</span>
-<span id="cb5-3"><a href=""></a>data<span class="sc">$</span>education <span class="ot">&lt;-</span> <span class="fu">factor</span>(data<span class="sc">$</span>education, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">'unknown'</span>, <span class="st">'primary'</span>, <span class="st">'secondary'</span>, <span class="st">'tertiary'</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="sourceCode" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="co"># on recode les variables de la base </span></span>
+<div class="sourceCode" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="co"># Conversion en facteurs avec niveaux ordonnés</span></span>
+<span id="cb5-2"><a href=""></a>data<span class="sc">$</span>marital <span class="ot">&lt;-</span> <span class="fu">factor</span>(data<span class="sc">$</span>marital, </span>
+<span id="cb5-3"><a href=""></a>                      <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">'single'</span>, <span class="st">'divorced'</span>, <span class="st">'married'</span>))</span>
+<span id="cb5-4"><a href=""></a>data<span class="sc">$</span>education <span class="ot">&lt;-</span> <span class="fu">factor</span>(data<span class="sc">$</span>education, </span>
+<span id="cb5-5"><a href=""></a>                        <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">'unknown'</span>, <span class="st">'primary'</span>, <span class="st">'secondary'</span>, <span class="st">'tertiary'</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="co"># Recodage des variables (suppression "unknown" et conversion binaire)</span></span>
 <span id="cb6-2"><a href=""></a>data<span class="sc">$</span>job <span class="ot">&lt;-</span> <span class="fu">fct_recode</span>(data<span class="sc">$</span>job, <span class="at">NULL =</span> <span class="st">"unknown"</span>)</span>
 <span id="cb6-3"><a href=""></a>data<span class="sc">$</span>education <span class="ot">&lt;-</span> <span class="fu">fct_recode</span>(data<span class="sc">$</span>education, <span class="at">NULL =</span> <span class="st">"unknown"</span>)</span>
 <span id="cb6-4"><a href=""></a>data<span class="sc">$</span>default <span class="ot">&lt;-</span> <span class="fu">recode_factor</span>(data<span class="sc">$</span>default, <span class="st">"yes"</span> <span class="ot">=</span> <span class="st">"1"</span>, <span class="st">"no"</span> <span class="ot">=</span> <span class="st">"0"</span>)</span>
@@ -390,9 +404,9 @@ Pierre Jean &amp; Karl Sondeji
 <section id="visualisation-de-nos-données" class="slide level2" data-transition="fade">
 <h2>Visualisation de nos données</h2>
 <div class="panel-tabset">
-<ul id="tabset-1" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-1-1">Partie 1</a></li><li><a href="#tabset-1-2">Partie 2</a></li></ul>
+<ul id="tabset-2" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-2-1">Partie 1</a></li><li><a href="#tabset-2-2">Partie 2</a></li></ul>
 <div class="tab-content">
-<div id="tabset-1-1">
+<div id="tabset-2-1">
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -403,7 +417,7 @@ Pierre Jean &amp; Karl Sondeji
 </div>
 </div>
 </div>
-<div id="tabset-1-2">
+<div id="tabset-2-2">
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -799,9 +813,9 @@ F-statistic:  2324 on 1 and 45209 DF,  p-value: &lt; 2.2e-16</code></pre>
 <section class="slide level2">
 
 <div class="panel-tabset">
-<ul id="tabset-2" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-2-1">SVM linéaire</a></li><li><a href="#tabset-2-2">SVM radial</a></li><li><a href="#tabset-2-3">SVM radial ROC</a></li><li><a href="#tabset-2-4">Comparaisons</a></li></ul>
+<ul id="tabset-3" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-3-1">SVM linéaire</a></li><li><a href="#tabset-3-2">SVM radial</a></li><li><a href="#tabset-3-3">SVM radial ROC</a></li><li><a href="#tabset-3-4">Comparaisons</a></li></ul>
 <div class="tab-content">
-<div id="tabset-2-1">
+<div id="tabset-3-1">
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -814,7 +828,7 @@ F-statistic:  2324 on 1 and 45209 DF,  p-value: &lt; 2.2e-16</code></pre>
 <p>Le modèle gagne en surface, mais l’aire en dessous de la courbe diminue.</p>
 <p>Le modèle gagne en surface, mais l’aire en dessous de la courbe diminue.</p>
 </div>
-<div id="tabset-2-2">
+<div id="tabset-3-2">
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -825,7 +839,7 @@ F-statistic:  2324 on 1 and 45209 DF,  p-value: &lt; 2.2e-16</code></pre>
 </div>
 </div>
 </div>
-<div id="tabset-2-3">
+<div id="tabset-3-3">
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -844,7 +858,7 @@ F-statistic:  2324 on 1 and 45209 DF,  p-value: &lt; 2.2e-16</code></pre>
 </div>
 </div>
 </div>
-<div id="tabset-2-4">
+<div id="tabset-3-4">
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -873,9 +887,9 @@ F-statistic:  2324 on 1 and 45209 DF,  p-value: &lt; 2.2e-16</code></pre>
 
 <h3 id="test-de-notre-cart-réalisé-avec-caret">Test de notre CART réalisé avec <code>Caret</code></h3>
 <div class="panel-tabset">
-<ul id="tabset-3" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-3-1">Qualité du modèle</a></li><li><a href="#tabset-3-2">Courbe ROC</a></li><li><a href="#tabset-3-3">Métriques</a></li></ul>
+<ul id="tabset-4" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-4-1">Qualité du modèle</a></li><li><a href="#tabset-4-2">Courbe ROC</a></li><li><a href="#tabset-4-3">Métriques</a></li></ul>
 <div class="tab-content">
-<div id="tabset-3-1">
+<div id="tabset-4-1">
 <div class="cell" data-layout-align="center">
 <div class="cell-output cell-output-stdout">
 <pre><code>Confusion Matrix and Statistics
@@ -911,7 +925,7 @@ Prediction   no  yes
 </div>
 </div>
 </div>
-<div id="tabset-3-2">
+<div id="tabset-4-2">
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -922,7 +936,7 @@ Prediction   no  yes
 </div>
 </div>
 </div>
-<div id="tabset-3-3">
+<div id="tabset-4-3">
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -945,9 +959,9 @@ Prediction   no  yes
 
 <h3 id="optimisation-en-utilisant-roc-et-auc">Optimisation en utilisant ROC et AUC</h3>
 <div class="panel-tabset">
-<ul id="tabset-4" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-4-1">Matrice de confusion</a></li><li><a href="#tabset-4-2">Courbe ROC</a></li><li><a href="#tabset-4-3">Performance</a></li></ul>
+<ul id="tabset-5" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-5-1">Matrice de confusion</a></li><li><a href="#tabset-5-2">Courbe ROC</a></li><li><a href="#tabset-5-3">Performance</a></li></ul>
 <div class="tab-content">
-<div id="tabset-4-1">
+<div id="tabset-5-1">
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <table class="table table-bordered caption-top" data-quarto-postprocess="true" style="width: auto !important; margin-left: auto; margin-right: auto;">
@@ -996,7 +1010,7 @@ Prédiction
 </div>
 </div>
 </div>
-<div id="tabset-4-2">
+<div id="tabset-5-2">
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -1007,7 +1021,7 @@ Prédiction
 </div>
 </div>
 </div>
-<div id="tabset-4-3">
+<div id="tabset-5-3">
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -1033,9 +1047,9 @@ Prédiction
 <section class="slide level2">
 
 <div class="panel-tabset">
-<ul id="tabset-5" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-5-1">OOB et err.rate</a></li><li><a href="#tabset-5-2">tree/error</a></li><li><a href="#tabset-5-3">Analyses</a></li></ul>
+<ul id="tabset-6" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-6-1">OOB et err.rate</a></li><li><a href="#tabset-6-2">tree/error</a></li><li><a href="#tabset-6-3">Analyses</a></li></ul>
 <div class="tab-content">
-<div id="tabset-5-1">
+<div id="tabset-6-1">
 <div class="cell" data-layout-align="center">
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 4</code></pre>
@@ -1069,7 +1083,7 @@ Prédiction
 </div>
 </div>
 </div>
-<div id="tabset-5-2">
+<div id="tabset-6-2">
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -1080,7 +1094,7 @@ Prédiction
 </div>
 </div>
 </div>
-<div id="tabset-5-3">
+<div id="tabset-6-3">
 <p>Le OOB est est une moyenne ponderée des yes et des no donc cest normale qu’elle soit entre les deux il y a déséquillibre entre yes et no les <em>yes</em> représentent 0.117% de nos données, donc si on arrive mieux à prédire les no que les yes c’est tout simplement parce que nous ne disposont pas d’assez de <em>yes</em> dans l’échantillon d’entraînement.</p>
 </div>
 </div>
@@ -1097,9 +1111,9 @@ Prédiction
 <section class="slide level2">
 
 <div class="panel-tabset">
-<ul id="tabset-6" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-6-1">Profondeur</a></li><li><a href="#tabset-6-2">erreur.min</a></li></ul>
+<ul id="tabset-7" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-7-1">Profondeur</a></li><li><a href="#tabset-7-2">erreur.min</a></li></ul>
 <div class="tab-content">
-<div id="tabset-6-1">
+<div id="tabset-7-1">
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -1110,7 +1124,7 @@ Prédiction
 </div>
 </div>
 </div>
-<div id="tabset-6-2">
+<div id="tabset-7-2">
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -1130,9 +1144,9 @@ Prédiction
 <section class="slide level2">
 
 <div class="panel-tabset">
-<ul id="tabset-7" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-7-1">Hétérogénéité et variance</a></li><li><a href="#tabset-7-2">Variables importantes</a></li></ul>
+<ul id="tabset-8" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-8-1">Hétérogénéité et variance</a></li><li><a href="#tabset-8-2">Variables importantes</a></li></ul>
 <div class="tab-content">
-<div id="tabset-7-1">
+<div id="tabset-8-1">
 <div class="cell" data-layout-align="center">
 <div class="cell-output cell-output-stdout">
 <pre><code>                 no         yes MeanDecreaseAccuracy MeanDecreaseGini
@@ -1153,7 +1167,7 @@ previous  14.316171  11.8174933            14.851965        165.63186</code></pr
 </div>
 </div>
 </div>
-<div id="tabset-7-2">
+<div id="tabset-8-2">
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -1175,9 +1189,9 @@ previous  14.316171  11.8174933            14.851965        165.63186</code></pr
 <section class="slide level2">
 
 <div class="panel-tabset">
-<ul id="tabset-8" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-8-1">Noeuds et précision</a></li><li><a href="#tabset-8-2">Courbe ROC</a></li></ul>
+<ul id="tabset-9" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-9-1">Noeuds et précision</a></li><li><a href="#tabset-9-2">Courbe ROC</a></li></ul>
 <div class="tab-content">
-<div id="tabset-8-1">
+<div id="tabset-9-1">
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -1188,7 +1202,7 @@ previous  14.316171  11.8174933            14.851965        165.63186</code></pr
 </div>
 </div>
 </div>
-<div id="tabset-8-2">
+<div id="tabset-9-2">
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -1274,9 +1288,9 @@ Prédiction
 <section class="slide level2">
 
 <div class="panel-tabset">
-<ul id="tabset-9" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-9-1">comparaison des arbres</a></li><li><a href="#tabset-9-2">Stump</a></li><li><a href="#tabset-9-3">Arbre pénalisé</a></li><li><a href="#tabset-9-4">Stump pénalisé</a></li></ul>
+<ul id="tabset-10" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-10-1">comparaison des arbres</a></li><li><a href="#tabset-10-2">Stump</a></li><li><a href="#tabset-10-3">Arbre pénalisé</a></li><li><a href="#tabset-10-4">Stump pénalisé</a></li></ul>
 <div class="tab-content">
-<div id="tabset-9-1">
+<div id="tabset-10-1">
 <div class="cell" data-layout-align="center">
 <div class="cell-output cell-output-stdout">
 <pre><code>Call:
@@ -1302,7 +1316,7 @@ train.err1 train.kap1
 </div>
 </div>
 </div>
-<div id="tabset-9-2">
+<div id="tabset-10-2">
 <div class="cell" data-layout-align="center">
 <div class="cell-output cell-output-stdout">
 <pre><code>Call:
@@ -1329,7 +1343,7 @@ train.err1 train.kap1
 </div>
 </div>
 </div>
-<div id="tabset-9-3">
+<div id="tabset-10-3">
 <div class="cell" data-layout-align="center">
 <div class="cell-output cell-output-stdout">
 <pre><code>Call:
@@ -1355,7 +1369,7 @@ train.err1 train.kap1
 </div>
 </div>
 </div>
-<div id="tabset-9-4">
+<div id="tabset-10-4">
 <div class="cell" data-layout-align="center">
 <div class="cell-output cell-output-stdout">
 <pre><code>Call:
@@ -1396,9 +1410,9 @@ train.err1 train.kap1
 <section class="slide level2">
 
 <div class="panel-tabset">
-<ul id="tabset-10" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-10-1">Erreur apprentissage</a></li><li><a href="#tabset-10-2">Précision du modèle</a></li></ul>
+<ul id="tabset-11" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-11-1">Erreur apprentissage</a></li><li><a href="#tabset-11-2">Précision du modèle</a></li></ul>
 <div class="tab-content">
-<div id="tabset-10-1">
+<div id="tabset-11-1">
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -1417,7 +1431,7 @@ train.err1 train.kap1
 </div>
 </div>
 </div>
-<div id="tabset-10-2">
+<div id="tabset-11-2">
 <div class="cell" data-layout-align="center">
 <div class="cell-output cell-output-stdout">
 <pre><code>          Truth
