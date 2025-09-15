@@ -85,7 +85,7 @@ quarto render "Quarto Bank Marketing Pierre et Karl.qmd"
 # Cliquer sur "Render" ou Ctrl+Shift+K
 
 # Ou pour voir le quarto
-# Cliquer sr le fichier html "Quarto Bank Marketing Pierre et Karl.html"
+# Cliquer sr le fichier html "Quarto Bank Marketing Pierre et Karl.html" une fois le dossier téléchargé
 ```
 
 ## 📈 Résultats principaux
