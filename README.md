@@ -117,12 +117,9 @@ Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
 
 Les contributions sont les bienvenues ! N'hésitez pas à :
 1. Fork le projet
-2. Créer une branche feature (`git checkout -b feature/AmazingFeature`)
-3. Commit vos changements (`git commit -m 'Add some AmazingFeature'`)
-4. Push vers la branche (`git push origin feature/AmazingFeature`)
-5. Ouvrir une Pull Request
+2. Me faire un retours si vous aves des remarques ou des suggestions d'amélioration
 
-## 📞 Contact
+## 📧 Contact
 
 - **Karl Sondeji** - [karl.sondeji@gmail.com]
 
