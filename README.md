@@ -16,6 +16,8 @@ Projet d'analyse de données et de machine learning sur les campagnes de marketi
 
 Identifier les clients les plus susceptibles de souscrire à un dépôt à terme afin d'optimiser les campagnes marketing et réduire les coûts d'investissement.
 
+<img src="bankmarketing.gif" alt="Mon Sticker" width="400" height="250" style="display: block; margin-left: auto; margin-right: auto;" />
+
 ## 📊 Dataset
 
 - **Source :** Campagnes de marketing direct bancaire portugais
